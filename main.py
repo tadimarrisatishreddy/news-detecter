@@ -12,7 +12,7 @@ from models import DetectionHistory, User
 from schemas import UserRegister
 from auth import hash_password, verify_password
 from gemma_service import detect_fake_news
-from news_input import router as news_router
+from news_input import router as news_router1
 
 
 SECRET_KEY = os.getenv("SECRET_KEY", "replace-this-development-secret")
@@ -33,7 +33,7 @@ app = FastAPI(
     version="1.0",
 )
 
-app.include_router(news_router)
+app.include_router(news_router1)
 
 
 def get_db():
@@ -56,7 +56,10 @@ def create_access_token(subject: str) -> str:
     )
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid or expired token",
@@ -74,10 +77,29 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         if not username:
             raise credentials_exception
 
-        return payload
-
     except JWTError:
         raise credentials_exception
+
+    user = db.query(User).filter(User.username == username).first()
+
+    if user is None:
+        raise credentials_exception
+
+    return user
+
+
+def require_role(*allowed_roles: str):
+    """Dependency factory: restrict access to specific roles."""
+
+    def role_checker(current_user: User = Depends(get_current_user)):
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to access this resource",
+            )
+        return current_user
+
+    return role_checker
 
 
 @app.get("/")
@@ -137,9 +159,11 @@ def login(
 
 
 @app.get("/profile")
-def profile(current_user: dict = Depends(get_current_user)):
+def profile(current_user: User = Depends(require_role("user", "admin"))):
     return {
-        "username": current_user["sub"],
+        "username": current_user.username,
+        "email": current_user.email,
+        "role": current_user.role,
     }
 
 
@@ -180,3 +204,81 @@ def detect_news(
         "explanation": new_detection.explanation,
         "created_at": new_detection.created_at,
     }
+
+
+@app.get("/history")
+def get_history(
+    limit: int = 20,
+    current_user: User = Depends(require_role("user", "admin")),
+    db: Session = Depends(get_db),
+):
+    """Return detection history for the authenticated user."""
+    detections = (
+        db.query(DetectionHistory)
+        .filter(DetectionHistory.user_id == current_user.id)
+        .order_by(DetectionHistory.id.desc())
+        .limit(limit)
+        .all()
+    )
+
+    return [
+        {
+            "id": d.id,
+            "claim": d.claim,
+            "verdict": d.verdict,
+            "confidence": d.confidence,
+            "explanation": d.explanation,
+            "created_at": d.created_at,
+        }
+        for d in detections
+    ]
+
+
+# -------------------------
+# ADMIN-ONLY ENDPOINTS
+# -------------------------
+
+
+@app.get("/admin/users")
+def list_users(
+    admin: User = Depends(require_role("admin")),
+    db: Session = Depends(get_db),
+):
+    """List all registered users (admin only)."""
+    users = db.query(User).all()
+    return [
+        {
+            "id": u.id,
+            "username": u.username,
+            "email": u.email,
+            "role": u.role,
+        }
+        for u in users
+    ]
+
+
+@app.get("/admin/detections")
+def all_detections(
+    limit: int = 50,
+    admin: User = Depends(require_role("admin")),
+    db: Session = Depends(get_db),
+):
+    """View all detection history across users (admin only)."""
+    detections = (
+        db.query(DetectionHistory)
+        .order_by(DetectionHistory.id.desc())
+        .limit(limit)
+        .all()
+    )
+    return [
+        {
+            "id": d.id,
+            "user_id": d.user_id,
+            "claim": d.claim,
+            "verdict": d.verdict,
+            "confidence": d.confidence,
+            "explanation": d.explanation,
+            "created_at": d.created_at,
+        }
+        for d in detections
+    ]

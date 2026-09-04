@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, DateTime, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import relationship
+from datetime import datetime, timezone
 from database import Base
 
 
@@ -28,9 +29,16 @@ class DetectionHistory(Base):
 
     user_id = Column(Integer, ForeignKey("users.id"))
 
+    claim = Column(String)
     news_text = Column(String)
+    verdict = Column(String)
     prediction = Column(String)
-    confidence = Column(String)
+    confidence = Column(Float)
+    explanation = Column(String)
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+    )
 
     # IMPORTANT
     user = relationship(
