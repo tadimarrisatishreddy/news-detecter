@@ -1,194 +1,83 @@
-import os
-from datetime import datetime, timedelta, timezone
-
 from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import JWTError, jwt
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from database import Base, SessionLocal, engine
-from models import DetectionHistory, User
-from schemas import UserRegister
-from auth import hash_password, verify_password
+from database import Base, engine
+from models import Analysis, DetectionHistory, User
+from schemas import AnalysisCreate
+from auth import (
+    create_access_token as auth_create_access_token,
+    get_current_active_user,
+    get_current_user,
+    get_db,
+    require_role,
+    router as auth_router,
+)
 from gemma_service import detect_fake_news
 from news_input import router as news_router1
-
-
-SECRET_KEY = os.getenv("SECRET_KEY", "replace-this-development-secret")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 class NewsRequest(BaseModel):
     claim: str
 
 
+# Initialize database tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="AI Fake News Detector API",
-    version="1.0",
+    description="Backend API with user authentication, role-based access control, and news detection.",
+    version="1.0.0",
 )
 
+# Include Routers
+app.include_router(auth_router)
 app.include_router(news_router1)
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# Helper function for backward-compatibility in tests
+def create_access_token(user_id: int, role: str = "user") -> str:
+    token, _, _ = auth_create_access_token(user_id, role=role)
+    return token
 
 
-def create_access_token(subject: str) -> str:
-    expires_at = datetime.now(timezone.utc) + timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
-    )
-
-    return jwt.encode(
-        {"sub": subject, "exp": expires_at},
-        SECRET_KEY,
-        algorithm=ALGORITHM,
-    )
-
-
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db),
-) -> User:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid or expired token",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    try:
-        payload = jwt.decode(
-            token,
-            SECRET_KEY,
-            algorithms=[ALGORITHM],
-        )
-        username = payload.get("sub")
-
-        if not username:
-            raise credentials_exception
-
-    except JWTError:
-        raise credentials_exception
-
-    user = db.query(User).filter(User.username == username).first()
-
-    if user is None:
-        raise credentials_exception
-
-    return user
-
-
-def require_role(*allowed_roles: str):
-    """Dependency factory: restrict access to specific roles."""
-
-    def role_checker(current_user: User = Depends(get_current_user)):
-        if current_user.role not in allowed_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You do not have permission to access this resource",
-            )
-        return current_user
-
-    return role_checker
-
-
-@app.get("/")
+@app.get("/", tags=["General"])
 def home():
-    return {"message": "Welcome to AI Fake News Detector"}
-
-
-@app.post("/register", status_code=status.HTTP_201_CREATED)
-def register(user: UserRegister, db: Session = Depends(get_db)):
-    existing_user = (
-        db.query(User)
-        .filter((User.email == user.email) | (User.username == user.username))
-        .first()
-    )
-
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email or username is already registered",
-        )
-
-    new_user = User(
-        full_name=user.full_name,
-        username=user.username,
-        email=user.email,
-        password=hash_password(user.password),
-        role="user",
-    )
-
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
-    return {"message": "User registered successfully"}
-
-
-@app.post("/login")
-def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db),
-):
-    user = db.query(User).filter(User.username == form_data.username).first()
-
-    if user is None or not verify_password(form_data.password, user.password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    access_token = create_access_token(user.username)
-
     return {
-        "access_token": access_token,
-        "token_type": "bearer",
+        "message": "Welcome to AI Fake News Detector API",
+        "docs_url": "/docs",
+        "auth_endpoints": "/auth",
     }
 
 
-@app.get("/profile")
-def profile(current_user: User = Depends(require_role("user", "admin"))):
+@app.get("/profile", tags=["User Authentication"], deprecated=True)
+def get_legacy_profile(current_user: User = Depends(get_current_active_user)):
+    """Legacy profile endpoint for backward compatibility."""
     return {
-        "username": current_user.username,
+        "username": current_user.username or current_user.full_name,
         "email": current_user.email,
         "role": current_user.role,
     }
 
 
-@app.post("/detect")
+# -----------------------------------------------------------------------------
+# Protected Detection & Analysis Endpoints
+# -----------------------------------------------------------------------------
+
+@app.post("/detect", tags=["Detection"])
 def detect_news(
     news: NewsRequest,
-    user_id: int,
+    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    user = db.query(User).filter(User.id == user_id).first()
-
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-
     result = detect_fake_news(news.claim)
 
     new_detection = DetectionHistory(
         claim=news.claim,
-        verdict=result["verdict"],
-        confidence=result["confidence"],
-        explanation=result["explanation"],
-        user_id=user_id,
+        verdict=result.get("verdict"),
+        confidence=result.get("confidence"),
+        explanation=result.get("explanation"),
+        user_id=current_user.id,
     )
 
     db.add(new_detection)
@@ -206,10 +95,10 @@ def detect_news(
     }
 
 
-@app.get("/history")
+@app.get("/history", tags=["Detection"])
 def get_history(
     limit: int = 20,
-    current_user: User = Depends(require_role("user", "admin")),
+    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
     """Return detection history for the authenticated user."""
@@ -234,12 +123,126 @@ def get_history(
     ]
 
 
-# -------------------------
-# ADMIN-ONLY ENDPOINTS
-# -------------------------
+@app.post("/analyses", status_code=status.HTTP_201_CREATED, tags=["Analysis"])
+def create_analysis(
+    body: AnalysisCreate,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Submit a news claim or article for AI analysis."""
+    analysis = Analysis(
+        user_id=current_user.id,
+        input_text=body.input_text,
+        source_url=body.source_url,
+        status="pending",
+    )
+    db.add(analysis)
+    db.commit()
+    db.refresh(analysis)
+
+    try:
+        analysis.status = "processing"
+        db.commit()
+
+        result = detect_fake_news(analysis.input_text)
+
+        analysis.verdict = result.get("verdict")
+        analysis.confidence = result.get("confidence")
+        analysis.explanation = result.get("explanation")
+        analysis.status = "completed"
+    except Exception as e:
+        analysis.status = "failed"
+        analysis.error_message = str(e)
+
+    db.commit()
+    db.refresh(analysis)
+
+    return {
+        "id": analysis.id,
+        "input_text": analysis.input_text,
+        "source_url": analysis.source_url,
+        "status": analysis.status,
+        "verdict": analysis.verdict,
+        "confidence": analysis.confidence,
+        "explanation": analysis.explanation,
+        "error_message": analysis.error_message,
+        "created_at": analysis.created_at,
+        "updated_at": analysis.updated_at,
+    }
 
 
-@app.get("/admin/users")
+@app.get("/analyses", tags=["Analysis"])
+def list_analyses(
+    limit: int = 20,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """List the authenticated user's own analyses."""
+    analyses = (
+        db.query(Analysis)
+        .filter(Analysis.user_id == current_user.id)
+        .order_by(Analysis.id.desc())
+        .limit(limit)
+        .all()
+    )
+
+    return [
+        {
+            "id": a.id,
+            "input_text": a.input_text,
+            "source_url": a.source_url,
+            "status": a.status,
+            "verdict": a.verdict,
+            "confidence": a.confidence,
+            "explanation": a.explanation,
+            "error_message": a.error_message,
+            "created_at": a.created_at,
+            "updated_at": a.updated_at,
+        }
+        for a in analyses
+    ]
+
+
+@app.get("/analyses/{analysis_id}", tags=["Analysis"])
+def get_analysis(
+    analysis_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Get a single analysis by ID. Users see only their own."""
+    analysis = db.query(Analysis).filter(Analysis.id == analysis_id).first()
+
+    if analysis is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Analysis not found",
+        )
+
+    if current_user.role != "admin" and analysis.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Analysis not found",
+        )
+
+    return {
+        "id": analysis.id,
+        "input_text": analysis.input_text,
+        "source_url": analysis.source_url,
+        "status": analysis.status,
+        "verdict": analysis.verdict,
+        "confidence": analysis.confidence,
+        "explanation": analysis.explanation,
+        "error_message": analysis.error_message,
+        "created_at": analysis.created_at,
+        "updated_at": analysis.updated_at,
+    }
+
+
+# -----------------------------------------------------------------------------
+# Admin-only Endpoints
+# -----------------------------------------------------------------------------
+
+@app.get("/admin/users", tags=["Admin"])
 def list_users(
     admin: User = Depends(require_role("admin")),
     db: Session = Depends(get_db),
@@ -249,15 +252,19 @@ def list_users(
     return [
         {
             "id": u.id,
+            "full_name": u.full_name,
             "username": u.username,
             "email": u.email,
             "role": u.role,
+            "is_active": u.is_active,
+            "is_verified": u.is_verified,
+            "created_at": u.created_at,
         }
         for u in users
     ]
 
 
-@app.get("/admin/detections")
+@app.get("/admin/detections", tags=["Admin"])
 def all_detections(
     limit: int = 50,
     admin: User = Depends(require_role("admin")),
@@ -281,4 +288,36 @@ def all_detections(
             "created_at": d.created_at,
         }
         for d in detections
+    ]
+
+
+@app.get("/admin/analyses", tags=["Admin"])
+def admin_list_analyses(
+    limit: int = 50,
+    admin: User = Depends(require_role("admin")),
+    db: Session = Depends(get_db),
+):
+    """View all analyses across all users (admin only)."""
+    analyses = (
+        db.query(Analysis)
+        .order_by(Analysis.id.desc())
+        .limit(limit)
+        .all()
+    )
+
+    return [
+        {
+            "id": a.id,
+            "user_id": a.user_id,
+            "input_text": a.input_text,
+            "source_url": a.source_url,
+            "status": a.status,
+            "verdict": a.verdict,
+            "confidence": a.confidence,
+            "explanation": a.explanation,
+            "error_message": a.error_message,
+            "created_at": a.created_at,
+            "updated_at": a.updated_at,
+        }
+        for a in analyses
     ]

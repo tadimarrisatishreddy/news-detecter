@@ -5,7 +5,6 @@ from dependencies import get_db, get_current_user
 from models import User
 from schemas import NewsInput
 
-
 router = APIRouter(
     prefix="/news",
     tags=["News Input & NLP"]
@@ -20,6 +19,6 @@ def submit_news(
 ):
     return {
         "message": "News submitted successfully",
-        "user": current_user.username,
-        "news_text": news.text
+        "user": current_user.full_name,
+        "news_text": news.news_text
     }
