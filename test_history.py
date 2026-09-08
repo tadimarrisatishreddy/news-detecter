@@ -4,13 +4,12 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from database import Base
 from models import Analysis, DetectionHistory, User
 from auth import hash_password
 from main import app, get_db, create_access_token
-
-from sqlalchemy.pool import StaticPool
 
 # --------------- test database setup ---------------
 
@@ -475,5 +474,4 @@ def test_admin_list_all_analyses(regular_user, admin_user):
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 2
-    # Admin endpoint includes user_id
     assert "user_id" in data[0]

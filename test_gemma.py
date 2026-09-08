@@ -1,6 +1,5 @@
 from gemma_client import analyze_news
 
-
 if __name__ == "__main__":
     news = """
 The government announced that the moon will be declared
