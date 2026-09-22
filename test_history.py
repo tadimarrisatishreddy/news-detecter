@@ -13,6 +13,7 @@ from main import app, get_db, create_access_token
 
 # --------------- test database setup ---------------
 
+SQLALCHEMY_TEST_URL = "sqlite:///./test_history.db"
 SQLALCHEMY_TEST_URL = "sqlite:///:memory:"
 
 test_engine = create_engine(
@@ -35,6 +36,8 @@ def override_get_db():
     finally:
         db.close()
 
+
+app.dependency_overrides[get_db] = override_get_db
 
 client = TestClient(app)
 
@@ -474,4 +477,5 @@ def test_admin_list_all_analyses(regular_user, admin_user):
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 2
+    # Admin endpoint includes user_id
     assert "user_id" in data[0]

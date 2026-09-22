@@ -7,3 +7,4 @@ the 29th state of the country tomorrow.
 """
     result = analyze_news(news)
     print(result)
+    print(result)

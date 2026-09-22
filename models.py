@@ -58,6 +58,12 @@ class User(Base):
         cascade="all, delete-orphan",
     )
 
+    news_submissions = relationship(
+        "NewsSubmission",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
 
 class RevokedToken(Base):
     __tablename__ = "revoked_tokens"
@@ -108,6 +114,35 @@ class EmailVerificationToken(Base):
     )
 
     user = relationship("User", back_populates="email_verification_tokens")
+
+
+class NewsSubmission(Base):
+    __tablename__ = "news_submissions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
+
+    title = Column(String, nullable=True)
+    raw_text = Column(String, nullable=False)
+    cleaned_text = Column(String, nullable=False)
+    source_url = Column(String, nullable=True)
+
+    # Extracted NLP metrics
+    word_count = Column(Integer, default=0, nullable=False)
+    char_count = Column(Integer, default=0, nullable=False)
+    sentence_count = Column(Integer, default=0, nullable=False)
+    reading_ease_score = Column(Float, nullable=True)
+    sensationalism_score = Column(Float, nullable=True)
+    lexical_diversity = Column(Float, nullable=True)
+    top_keywords = Column(String, nullable=True)  # JSON-encoded string
+
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    user = relationship("User", back_populates="news_submissions")
 
 
 class DetectionHistory(Base):

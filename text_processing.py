@@ -1,41 +1,29 @@
-import re
-
-
-def clean_text(text: str) -> str:
-    """
-    Clean raw news text for NLP processing.
-    """
-
-    # Convert to lowercase
-    text = text.lower()
-
-    # Remove URLs
-    text = re.sub(
-        r"http\S+|www\S+|https\S+",
-        "",
-        text
-    )
-
-    # Remove special characters
-    text = re.sub(
-        r"[^a-zA-Z0-9\s]",
-        " ",
-        text
-    )
-
-    # Remove extra spaces
-    text = re.sub(
-        r"\s+",
-        " ",
-        text
-    ).strip()
-
-    return text
+from nlp import (
+    calculate_readability,
+    calculate_word_stats,
+    clean_text,
+    detect_sensationalism,
+    extract_keywords,
+    extract_nlp_features,
+    split_into_sentences,
+    tokenize_words,
+)
 
 
 def get_word_count(text: str) -> int:
-    """
-    Count words in text.
-    """
+    """Count words in text."""
+    tokens = tokenize_words(text, lowercase=True, remove_punct=True)
+    return len(tokens)
 
-    return len(text.split())
+
+__all__ = [
+    "clean_text",
+    "get_word_count",
+    "tokenize_words",
+    "split_into_sentences",
+    "calculate_word_stats",
+    "calculate_readability",
+    "detect_sensationalism",
+    "extract_keywords",
+    "extract_nlp_features",
+]
