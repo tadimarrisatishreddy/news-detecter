@@ -1,4 +1,4 @@
-# 📰 AI Fake News Detector — Comprehensive Project Presentation
+ # 📰 AI Fake News Detector — Comprehensive Project Presentation
 ## System Architecture, Module 1 (Authentication), and Module 2 (News Input & NLP Engine)
 
 ---
@@ -411,4 +411,3 @@ uvicorn main:app --reload --port 8000
 | **Module 3** | Gemma AI LLM Integration, Prompt Engineering, & Fake News Classification | 🔜 Next Module |
 | **Module 4** | Web Grounding, Fact-Checking Evidence Retrieval, & Source Verification | 📋 Planned |
 | **Module 5** | Admin Dashboard, Analytics, User Management, & System Monitoring | 📋 Planned |
-
