@@ -260,3 +260,65 @@ class BatchDetectionRequest(BaseModel):
 class BatchDetectionResponse(BaseModel):
     total_processed: int
     results: List[DetectionResponseItem]
+
+
+# -----------------------------------------------------------------------------
+# FACT CHECKING SCHEMAS (MODULE 4)
+# -----------------------------------------------------------------------------
+
+class EvidenceSourceSchema(BaseModel):
+    """Schema representing an individual retrieved evidence citation."""
+    source_name: str
+    source_url: str
+    domain: Optional[str] = None
+    tier: Optional[str] = None
+    authority_weight: float = 0.5
+    stance: str = "NOT_ENOUGH_INFO"
+    title: Optional[str] = None
+    snippet: Optional[str] = None
+    published_date: Optional[str] = None
+
+
+class FactCheckRequest(BaseModel):
+    """Request payload for verifying a claim against trusted sources."""
+    claim: str = Field(
+        ...,
+        min_length=5,
+        max_length=50000,
+        description="News claim, headline, or assertion to fact-check",
+    )
+    check_government_only: bool = Field(
+        default=False,
+        description="If True, restricts search strictly to official government portals and gazettes",
+    )
+    max_sources: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Maximum number of authoritative citations to retrieve",
+    )
+
+
+class FactCheckResponse(BaseModel):
+    """Response payload with fact-checking verdict and evidence breakdown."""
+    id: Optional[int] = None
+    claim: str
+    status: str  # VERIFIED, REFUTED, DISPUTED, UNPROVEN
+    verdict: str  # TRUE, FALSE, MISLEADING, UNVERIFIED
+    trust_score: float = Field(ge=0.0, le=100.0)
+    summary: str
+    evidence_count: int
+    evidence_sources: List[EvidenceSourceSchema]
+    verified_at: str
+
+
+class TrustedSourceItem(BaseModel):
+    domain: str
+    name: str
+    tier: str
+    authority_weight: float
+
+
+class WhitelistResponse(BaseModel):
+    total_sources: int
+    trusted_domains: List[TrustedSourceItem]

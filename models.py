@@ -64,6 +64,12 @@ class User(Base):
         cascade="all, delete-orphan",
     )
 
+    fact_checks = relationship(
+        "FactCheckRecord",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
 
 class RevokedToken(Base):
     __tablename__ = "revoked_tokens"
@@ -196,3 +202,54 @@ class Analysis(Base):
     )
 
     user = relationship("User", back_populates="analyses")
+
+
+class FactCheckRecord(Base):
+    __tablename__ = "fact_checks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    claim = Column(String, nullable=False)
+    status = Column(String, default="UNPROVEN", nullable=False)
+    verdict = Column(String, default="UNVERIFIED", nullable=False)
+    trust_score = Column(Float, default=0.0, nullable=False)
+    summary = Column(String, nullable=True)
+
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    user = relationship("User", back_populates="fact_checks")
+    evidence_items = relationship(
+        "EvidenceItemRecord",
+        back_populates="fact_check",
+        cascade="all, delete-orphan",
+    )
+
+
+class EvidenceItemRecord(Base):
+    __tablename__ = "evidence_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    fact_check_id = Column(Integer, ForeignKey("fact_checks.id"), nullable=False)
+
+    source_name = Column(String, nullable=False)
+    source_url = Column(String, nullable=False)
+    domain = Column(String, nullable=True)
+    tier = Column(String, nullable=True)
+    authority_weight = Column(Float, default=0.5, nullable=False)
+    stance = Column(String, default="NOT_ENOUGH_INFO", nullable=False)
+    title = Column(String, nullable=True)
+    snippet = Column(String, nullable=True)
+    published_date = Column(String, nullable=True)
+
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    fact_check = relationship("FactCheckRecord", back_populates="evidence_items")
