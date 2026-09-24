@@ -1,6 +1,9 @@
 # AI Fake News Detector - Backend API
 
-A production-ready FastAPI backend for the AI Fake News Detector project, featuring secure User Authentication (Module 1) and robust News Input & NLP Processing (Module 2).
+A production-ready FastAPI backend for the AI Fake News Detector project, featuring:
+- **Module 1**: Secure User Authentication & Role-Based Access Control (RBAC)
+- **Module 2**: Deterministic News Input & NLP Text Processing Engine
+- **Module 3**: AI Detection & Fake News Classification with Google Gemma 3
 
 ---
 
@@ -29,8 +32,22 @@ A production-ready FastAPI backend for the AI Fake News Detector project, featur
   - **Readability Scoring**: Flesch Reading Ease score (0–100 scale) and Flesch-Kincaid Grade Level.
   - **Sensationalism / Clickbait Detection**: Evaluates ALL-CAPS shouting patterns, multiple punctuation sequences (`!!!`, `???`), and sensational trigger phrases (`shocking`, `bombshell`, `unbelievable`, `conspiracy`, etc.).
   - **Keyword Extraction**: Informative keyword frequency ranking.
-- **Persistence & API Endpoints**:
-  - Clean, modular REST endpoints for preprocessing, deep feature analysis, batch processing, and authenticated news submission with SQLite/PostgreSQL storage.
+
+### 3. AI Detection & Verification Engine (Module 3)
+- **Google Gemma AI Integration**:
+  - Direct connector to **Ollama** running `gemma3:4b` (or configurable model).
+  - Low-temperature deterministic inference with fact-checking role prompt.
+- **Context-Enriched Prompting**:
+  - Automatically injects Module 2's NLP signals (sensationalism index, ALL-CAPS ratio, clickbait triggers, reading level) into the prompt context.
+- **Robust Output Parsing & Normalization**:
+  - Robust JSON parser with regex fallbacks and synonym normalization.
+  - Classifies news into `LIKELY_REAL`, `LIKELY_FAKE`, or `UNCERTAIN`.
+  - Produces calibrated confidence scores (0–100%) and explainable reasoning.
+- **Hybrid Confidence Calibration**:
+  - Reconciles LLM predictions with deterministic linguistic metrics for higher fidelity.
+- **Batch Processing & Resilience**:
+  - Instant offline fallback simulation for testing and low-latency environments.
+  - `POST /detect/batch` for evaluating up to 50 claims concurrently.
 
 ---
 
@@ -61,11 +78,15 @@ PASSWORD_RESET_TOKEN_EXPIRE_MINUTES=15
 EMAIL_VERIFICATION_TOKEN_EXPIRE_HOURS=24
 EMAIL_FROM=noreply@fakenewsdetector.com
 APP_BASE_URL=http://localhost:8000
+
+# Gemma AI Configuration
+OLLAMA_BASE_URL=http://localhost:11434
+GEMMA_MODEL=gemma3:4b
+AI_TIMEOUT_SECONDS=30
+AI_DETECTION_MODE=auto
 ```
 
 ### 3. Start Server
-
-Database tables are initialized automatically on startup:
 
 ```bash
 uvicorn main:app --reload --port 8000
@@ -96,93 +117,21 @@ Interactive API documentation:
 
 ### 📰 News Input & NLP Processing Endpoints (`/news`)
 
-#### 1. Clean & Preprocess Text
-**`POST /news/preprocess`** (Status: `200 OK`)
-
-Request Body:
-```json
-{
-  "text": "<p>Breaking! You won't believe this update: https://example.com/live 100% cure discovered!</p>",
-  "lowercase": true,
-  "strip_html": true,
-  "expand_contractions": true,
-  "remove_urls": true,
-  "remove_stopwords": false,
-  "preserve_sentence_punct": false
-}
-```
-
-Response Body:
-```json
-{
-  "cleaned_text": "breaking you will not believe this update 100 cure discovered",
-  "word_count": 9,
-  "tokens": ["breaking", "you", "will", "not", "believe", "this", "update", "100", "cure", "discovered"],
-  "sentences": ["Breaking! You won't believe this update: https://example.com/live 100% cure discovered!"]
-}
-```
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|---|
+| `POST` | `/news/preprocess` | Clean, normalize, and tokenize raw news text | No |
+| `POST` | `/news/analyze` | Linguistic stats, readability, and sensationalism | No |
+| `POST` | `/news/submit` | Ingest and store news article for calling user | Bearer Token |
+| `GET` | `/news/submissions` | List user's processed news submissions | Bearer Token |
+| `GET` | `/news/submissions/{id}` | Get single submission with user isolation | Bearer Token |
+| `POST` | `/news/batch-analyze` | Batch process up to 50 news articles | No |
 
 ---
 
-#### 2. Comprehensive NLP Feature Analysis
-**`POST /news/analyze`** (Status: `200 OK`)
+### 🤖 AI Detection Endpoints (`/detect` & `/analyses`)
 
-Request Body:
-```json
-{
-  "news_text": "SHOCKING BOMBSHELL!! International researchers confirmed a breakthrough in quantum fusion energy after years of collaboration."
-}
-```
-
-Response Body:
-```json
-{
-  "raw_text": "SHOCKING BOMBSHELL!! International researchers confirmed a breakthrough in quantum fusion energy after years of collaboration.",
-  "cleaned_text": "shocking bombshell international researchers confirmed a breakthrough in quantum fusion energy after years of collaboration",
-  "sentences": [
-    "SHOCKING BOMBSHELL!!",
-    "International researchers confirmed a breakthrough in quantum fusion energy after years of collaboration."
-  ],
-  "tokens": ["shocking", "bombshell", "international", "researchers", "confirmed", "a", "breakthrough", "in", "quantum", "fusion", "energy", "after", "years", "of", "collaboration"],
-  "tokens_no_stopwords": ["shocking", "bombshell", "international", "researchers", "confirmed", "breakthrough", "quantum", "fusion", "energy", "years", "collaboration"],
-  "statistics": {
-    "character_count": 128,
-    "character_count_no_spaces": 113,
-    "word_count": 15,
-    "unique_word_count": 15,
-    "sentence_count": 2,
-    "lexical_diversity": 1.0,
-    "avg_word_length": 6.8,
-    "avg_sentence_length": 7.5
-  },
-  "readability": {
-    "flesch_reading_ease": 38.45,
-    "grade_level": 12.8,
-    "reading_level": "Difficult"
-  },
-  "sensationalism": {
-    "sensationalism_score": 0.44,
-    "is_sensational": true,
-    "caps_ratio": 0.1333,
-    "exclamation_count": 2,
-    "question_cluster_count": 0,
-    "trigger_words_found": ["shocking", "bombshell"]
-  },
-  "top_keywords": ["shocking", "bombshell", "international", "researchers", "confirmed"],
-  "top_keywords_with_freq": [
-    {"keyword": "shocking", "count": 1},
-    {"keyword": "bombshell", "count": 1},
-    {"keyword": "international", "count": 1},
-    {"keyword": "researchers", "count": 1},
-    {"keyword": "confirmed", "count": 1}
-  ]
-}
-```
-
----
-
-#### 3. Submit News Article (Authenticated Persistence)
-**`POST /news/submit`** (Status: `201 Created`)
+#### 1. Instant News Detection
+**`POST /detect`** (Status: `200 OK`)
 
 Headers:
 ```http
@@ -192,70 +141,39 @@ Authorization: Bearer <access_token>
 Request Body:
 ```json
 {
-  "title": "Global Climate Accord Finalized",
-  "news_text": "Representatives from 120 nations reached a consensus on global environmental targets in Geneva today.",
-  "source_url": "https://reuters.com/news/environment"
+  "claim": "The government announced that the moon will be declared the 29th state of the country tomorrow."
 }
 ```
 
 Response Body:
 ```json
 {
-  "id": 1,
-  "user_id": 1,
-  "title": "Global Climate Accord Finalized",
-  "raw_text": "Representatives from 120 nations reached a consensus on global environmental targets in Geneva today.",
-  "cleaned_text": "representatives from 120 nations reached a consensus on global environmental targets in geneva today",
-  "source_url": "https://reuters.com/news/environment",
-  "word_count": 14,
-  "char_count": 101,
-  "sentence_count": 1,
-  "reading_ease_score": 42.15,
-  "sensationalism_score": 0.0,
-  "lexical_diversity": 1.0,
-  "top_keywords": "[\"representatives\", \"nations\", \"reached\", \"consensus\", \"global\"]",
-  "created_at": "2026-09-10T16:30:00Z"
+  "message": "News analyzed successfully",
+  "detection_id": 1,
+  "claim": "The government announced that the moon will be declared the 29th state of the country tomorrow.",
+  "verdict": "LIKELY_FAKE",
+  "confidence": 95.0,
+  "explanation": "This claim is highly implausible and lacks any credible evidence. The statement contradicts established geopolitical realities and legal frameworks.",
+  "created_at": "2026-09-24T17:30:00Z"
 }
 ```
 
 ---
 
-#### 4. List User Submissions
-**`GET /news/submissions?limit=20&offset=0`** (Status: `200 OK`)
+#### 2. Batch AI Detection
+**`POST /detect/batch`** (Status: `200 OK`)
 
 Headers:
 ```http
 Authorization: Bearer <access_token>
 ```
-
----
-
-#### 5. Get Submission by ID
-**`GET /news/submissions/{id}`** (Status: `200 OK`)
-
-Headers:
-```http
-Authorization: Bearer <access_token>
-```
-*Note: Users can only retrieve their own submissions. Admin accounts have cross-user visibility.*
-
----
-
-#### 6. Batch News Analysis
-**`POST /news/batch-analyze`** (Status: `200 OK`)
 
 Request Body:
 ```json
 {
-  "articles": [
-    {
-      "id": "item-1",
-      "text": "SHOCKING BOMBSHELL!! You won't believe what they found!"
-    },
-    {
-      "id": "item-2",
-      "text": "The aerospace organization deployed a new weather observation satellite into polar orbit."
-    }
+  "claims": [
+    "SHOCKING BOMBSHELL!! Miracle cure they don't want you to know!",
+    "Central bank announced a 25 basis point reduction in the benchmark interest rate."
   ]
 }
 ```
@@ -266,24 +184,38 @@ Response Body:
   "total_processed": 2,
   "results": [
     {
-      "id": "item-1",
-      "word_count": 8,
-      "cleaned_text": "shocking bombshell you will not believe what they found",
-      "readability_score": 75.2,
-      "sensationalism_score": 0.54,
-      "is_sensational": true,
-      "top_keywords": ["shocking", "bombshell", "believe", "found"]
+      "claim": "SHOCKING BOMBSHELL!! Miracle cure they don't want you to know!",
+      "verdict": "LIKELY_FAKE",
+      "confidence": 95.0,
+      "explanation": "Sensational clickbait styling and unsubstantiated claims of miracle remedies indicate fabricated content.",
+      "key_signals": ["Sensationalist clickbait style", "Unsubstantiated factual claim"]
     },
     {
-      "id": "item-2",
-      "word_count": 11,
-      "cleaned_text": "the aerospace organization deployed a new weather observation satellite into polar orbit",
-      "readability_score": 35.1,
-      "sensationalism_score": 0.0,
-      "is_sensational": false,
-      "top_keywords": ["aerospace", "organization", "deployed", "weather", "observation"]
+      "claim": "Central bank announced a 25 basis point reduction in the benchmark interest rate.",
+      "verdict": "LIKELY_REAL",
+      "confidence": 88.0,
+      "explanation": "The article uses objective, journalistic language consistent with legitimate institutional reporting.",
+      "key_signals": ["Neutral objective tone", "Verifiable institutional attribution"]
     }
   ]
+}
+```
+
+---
+
+#### 3. Deep Analysis with Source URL
+**`POST /analyses`** (Status: `201 Created`)
+
+Headers:
+```http
+Authorization: Bearer <access_token>
+```
+
+Request Body:
+```json
+{
+  "input_text": "Scientists announce a groundbreaking milestone in nuclear fusion energy research after years of international collaboration.",
+  "source_url": "https://nature.com/articles/sample"
 }
 ```
 
@@ -292,12 +224,15 @@ Response Body:
 ## 🧪 Running Automated Tests
 
 ```bash
-# Run NLP & News Input test suite (30 tests)
+# Run all 101 tests across all modules
+python -m pytest -v
+
+# Run AI Detection test suite (18 tests)
+python -m pytest tests/test_ai_detection.py -v
+
+# Run NLP test suite (30 tests)
 python -m pytest tests/test_nlp.py -v
 
 # Run Authentication test suite (27 tests)
 python -m pytest tests/test_auth.py -v
-
-# Run Full Test Suite (83 tests total)
-python -m pytest -v
 ```

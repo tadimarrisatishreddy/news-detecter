@@ -10,6 +10,9 @@ from database import Base
 from models import Analysis, DetectionHistory, User
 from auth import hash_password
 from main import app, get_db, create_access_token
+from ai.gemma_client import default_gemma_client
+
+default_gemma_client.mode = "mock"
 
 # --------------- test database setup ---------------
 

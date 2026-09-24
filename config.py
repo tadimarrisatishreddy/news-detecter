@@ -21,3 +21,9 @@ EMAIL_VERIFICATION_TOKEN_EXPIRE_HOURS = int(os.getenv("EMAIL_VERIFICATION_TOKEN_
 EMAIL_FROM = os.getenv("EMAIL_FROM", "noreply@fakenewsdetector.com")
 APP_BASE_URL = os.getenv("APP_BASE_URL", "http://localhost:8000")
 
+# AI & Gemma Model Configuration
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+GEMMA_MODEL = os.getenv("GEMMA_MODEL", "gemma3:4b")
+AI_TIMEOUT_SECONDS = int(os.getenv("AI_TIMEOUT_SECONDS", "30"))
+AI_DETECTION_MODE = os.getenv("AI_DETECTION_MODE", "auto")  # auto, ollama, mock
+

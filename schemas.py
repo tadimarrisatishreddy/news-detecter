@@ -211,3 +211,52 @@ class AnalysisResponse(BaseModel):
     error_message: Optional[str]
     created_at: datetime
     updated_at: datetime
+
+
+# -----------------------------------------------------------------------------
+# AI DETECTION SCHEMAS (MODULE 3)
+# -----------------------------------------------------------------------------
+
+class DetectionRequest(BaseModel):
+    """Request body for POST /detect."""
+    claim: str = Field(
+        ...,
+        min_length=5,
+        max_length=50000,
+        description="News claim or article statement to detect veracity",
+    )
+
+
+class DetectionResponse(BaseModel):
+    """Response model for AI fake news detection."""
+    message: str = "News analyzed successfully"
+    detection_id: int
+    claim: str
+    verdict: str
+    confidence: float
+    explanation: str
+    key_signals: Optional[List[str]] = Field(default_factory=list)
+    manipulation_tactics: Optional[List[str]] = Field(default_factory=list)
+    created_at: datetime
+
+
+class DetectionResponseItem(BaseModel):
+    claim: str
+    verdict: str
+    confidence: float
+    explanation: str
+    key_signals: List[str] = Field(default_factory=list)
+
+
+class BatchDetectionRequest(BaseModel):
+    claims: List[str] = Field(
+        ...,
+        min_length=1,
+        max_length=50,
+        description="List of claims to analyze with Gemma AI in batch",
+    )
+
+
+class BatchDetectionResponse(BaseModel):
+    total_processed: int
+    results: List[DetectionResponseItem]

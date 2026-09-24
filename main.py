@@ -4,7 +4,14 @@ from sqlalchemy.orm import Session
 
 from database import Base, engine
 from models import Analysis, DetectionHistory, User
-from schemas import AnalysisCreate
+from schemas import (
+    AnalysisCreate,
+    BatchDetectionRequest,
+    BatchDetectionResponse,
+    DetectionRequest,
+    DetectionResponse,
+    DetectionResponseItem,
+)
 from auth import (
     create_access_token as auth_create_access_token,
     get_current_active_user,
@@ -13,7 +20,7 @@ from auth import (
     require_role,
     router as auth_router,
 )
-from gemma_service import detect_fake_news
+from gemma_service import detect_fake_news, detect_fake_news_batch
 from news_input import router as news_router1
 
 
@@ -121,6 +128,43 @@ def get_history(
         }
         for d in detections
     ]
+
+
+@app.post("/detect/batch", response_model=BatchDetectionResponse, tags=["Detection"])
+def batch_detect_news(
+    payload: BatchDetectionRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Batch analyze multiple news claims with Gemma AI."""
+    results = []
+    for claim in payload.claims:
+        res = detect_fake_news(claim)
+
+        detection = DetectionHistory(
+            claim=claim,
+            verdict=res.get("verdict"),
+            confidence=res.get("confidence"),
+            explanation=res.get("explanation"),
+            user_id=current_user.id,
+        )
+        db.add(detection)
+
+        results.append(
+            DetectionResponseItem(
+                claim=claim,
+                verdict=res.get("verdict", "UNCERTAIN"),
+                confidence=res.get("confidence", 0.0),
+                explanation=res.get("explanation", ""),
+                key_signals=res.get("key_signals", []),
+            )
+        )
+    db.commit()
+
+    return BatchDetectionResponse(
+        total_processed=len(results),
+        results=results,
+    )
 
 
 @app.post("/analyses", status_code=status.HTTP_201_CREATED, tags=["Analysis"])
