@@ -83,19 +83,20 @@ def verify_claim(
         )
 
     # Determine overall verdict and trust score
-    if refute_weight > support_weight and refute_weight >= 0.7:
+    if refute_weight > support_weight and refute_weight >= 0.5:
         status = "REFUTED"
         verdict = "FALSE"
         trust_score = min(98.0, 70.0 + (refute_weight * 15.0))
         top_refuter = next((s["source_name"] for s in processed_sources if s["stance"] == "REFUTES"), "Authoritative records")
         summary = f"Claim is REFUTED by official evidence from {top_refuter}. Official records contradict this assertion."
 
-    elif support_weight > refute_weight and support_weight >= 0.7:
+    elif support_weight > refute_weight and support_weight >= 0.5:
         status = "VERIFIED"
         verdict = "TRUE"
         trust_score = min(98.0, 70.0 + (support_weight * 15.0))
         top_supporter = next((s["source_name"] for s in processed_sources if s["stance"] == "SUPPORTS"), "Official portals")
         summary = f"Claim is VERIFIED by authoritative records from {top_supporter}."
+
 
     elif support_weight > 0 and refute_weight > 0:
         status = "DISPUTED"

@@ -1,5 +1,5 @@
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 from nlp.tokenization import ENGLISH_STOPWORDS, tokenize_words
 
 REFUTATION_MARKERS = {
@@ -10,20 +10,36 @@ REFUTATION_MARKERS = {
 }
 
 SUPPORT_MARKERS = {
-    "confirmed", "approved", "announced", "published", "official statement",
-    "milestone", "verified", "agreed", "implemented", "enacted", "ratified",
-    "launched", "established", "consensus", "declared", "concluded",
+    "confirmed", "confirm", "approved", "announced", "published", "official statement",
+    "milestone", "milestones", "verified", "agreed", "implemented", "enacted", "ratified",
+    "launched", "established", "consensus", "declared", "concluded", "discover", "discovered",
 }
 
 
+def stem_token(token: str) -> str:
+    """Lightweight rule-based suffix normalization for English tokens."""
+    t = token.lower().strip()
+    if t.endswith("ies") and len(t) > 4:
+        return t[:-3] + "y"
+    if t.endswith("es") and len(t) > 3:
+        return t[:-2]
+    if t.endswith("s") and len(t) > 3:
+        return t[:-1]
+    if t.endswith("ed") and len(t) > 4:
+        return t[:-2]
+    if t.endswith("ing") and len(t) > 4:
+        return t[:-3]
+    return t
+
+
 def calculate_lexical_overlap(claim: str, snippet: str) -> float:
-    """Calculates Jaccard similarity between non-stopword tokens of claim and snippet."""
-    claim_tokens = {
-        t.lower() for t in tokenize_words(claim, remove_punct=True)
+    """Calculates stemmed Jaccard similarity between non-stopword tokens of claim and snippet."""
+    claim_tokens: Set[str] = {
+        stem_token(t) for t in tokenize_words(claim, remove_punct=True)
         if t.lower() not in ENGLISH_STOPWORDS and len(t) > 2
     }
-    snippet_tokens = {
-        t.lower() for t in tokenize_words(snippet, remove_punct=True)
+    snippet_tokens: Set[str] = {
+        stem_token(t) for t in tokenize_words(snippet, remove_punct=True)
         if t.lower() not in ENGLISH_STOPWORDS and len(t) > 2
     }
 
@@ -54,11 +70,11 @@ def classify_stance(claim: str, snippet: str) -> Tuple[str, float]:
         confidence = min(0.98, 0.70 + (len(found_refutations) * 0.1) + (overlap * 0.2))
         return ("REFUTES", round(confidence, 2))
 
-    if found_supports and overlap >= 0.15:
-        confidence = min(0.95, 0.65 + (len(found_supports) * 0.1) + (overlap * 0.2))
+    if found_supports and overlap >= 0.10:
+        confidence = min(0.95, 0.70 + (len(found_supports) * 0.08) + (overlap * 0.25))
         return ("SUPPORTS", round(confidence, 2))
 
-    if overlap >= 0.30:
-        return ("SUPPORTS", round(0.50 + overlap * 0.4, 2))
+    if overlap >= 0.25:
+        return ("SUPPORTS", round(0.55 + overlap * 0.4, 2))
 
     return ("NOT_ENOUGH_INFO", 0.40)

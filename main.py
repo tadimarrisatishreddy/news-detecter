@@ -22,6 +22,7 @@ from auth import (
 )
 from gemma_service import detect_fake_news, detect_fake_news_batch
 from news_input import router as news_router1
+from fact_checking.router import router as fact_checking_router
 
 
 class NewsRequest(BaseModel):
@@ -33,13 +34,14 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="AI Fake News Detector API",
-    description="Backend API with user authentication, role-based access control, and news detection.",
+    description="Backend API with user authentication, role-based access control, news detection, and fact checking.",
     version="1.0.0",
 )
 
 # Include Routers
 app.include_router(auth_router)
 app.include_router(news_router1)
+app.include_router(fact_checking_router)
 
 
 # Helper function for backward-compatibility in tests
