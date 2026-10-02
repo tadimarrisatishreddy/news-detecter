@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TruthLens AI - Fake News Detector & Fact-Checking Studio</title>
+  <meta name="description" content="AI-Powered Fake News Detection, NLP Linguistic Analysis, and Government Fact-Checking Studio.">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <!-- ======================================================================
+       App Header & Navigation
+       ====================================================================== -->
+  <header class="app-header">
+    <div class="header-container">
+      <a href="#" class="brand">
+        <div class="brand-icon">
+          <img src="/static/favicon.svg" alt="TruthLens Logo" width="36" height="36">
+        </div>
+        <div class="brand-text">
+          <h1>TruthLens AI</h1>
+        </div>
+        <span class="brand-badge">v1.0 • Gemma 3</span>
+      </a>
+
+      <nav aria-label="Main Navigation">
+        <ul class="nav-tabs">
+          <li>
+            <button class="nav-tab-btn active" data-tab="tab-detect">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.5h-2v-2h2zm0-4.5h-2V7h2z"/></svg>
+              AI Detection
+            </button>
+          </li>
+          <li>
+            <button class="nav-tab-btn" data-tab="tab-factcheck">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+              Fact Checking
+            </button>
+          </li>
+          <li>
+            <button class="nav-tab-btn" data-tab="tab-nlp">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+              NLP Studio
+            </button>
+          </li>
+          <li>
+            <button class="nav-tab-btn" data-tab="tab-dashboard">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+              Dashboard
+            </button>
+          </li>
+          <li>
+            <button class="nav-tab-btn" data-tab="tab-admin" id="nav-btn-admin" style="display: none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Admin Panel
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="user-controls">
+        <div id="auth-guest-section" class="btn-group">
+          <button class="btn btn-secondary btn-sm" id="btn-open-login">Sign In</button>
+          <button class="btn btn-primary btn-sm" id="btn-open-register">Register</button>
+        </div>
+
+        <div id="auth-user-section" class="user-status-card" style="display: none;">
+          <div class="user-avatar" id="header-user-avatar">U</div>
+          <div class="user-info-text">
+            <span class="user-name" id="header-user-name">User</span>
+            <span class="user-role-tag" id="header-user-role">USER</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-logout" title="Sign Out">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================================================================
+       Main App Container
+       ====================================================================== -->
+  <main class="app-main">
+
+    <!-- --------------------------------------------------------------------
+         TAB 1: AI Detection (Module 3)
+         -------------------------------------------------------------------- -->
+    <section id="tab-detect" class="tab-pane active">
+      <div class="hero-banner">
+        <div class="hero-text">
+          <h2>AI Fake News Detection Engine</h2>
+          <p>Powered by Google Gemma 3 fact-checking LLM with linguistic context enrichment & hybrid calibration.</p>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-chip">
+            <div class="stat-chip-val" id="stat-ai-verdict">Ready</div>
+            <div class="stat-chip-lbl">Model Status</div>
+          </div>
+          <div class="stat-chip">
+            <div class="stat-chip-val">Ollama</div>
+            <div class="stat-chip-lbl">Inference Core</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Detection Input Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+              Analyze News Claim
+            </h3>
+            <span class="brand-badge">POST /detect</span>
+          </div>
+
+          <form id="form-detect">
+            <div class="form-group">
+              <label for="detect-claim-input">News Statement or Headline to Verify:</label>
+              <textarea id="detect-claim-input" placeholder="Paste a headline, social media post, or news article text (min 5 characters)..." required></textarea>
+              <div class="input-hint">Requires an active session. If not logged in, you can test with default demo mode.</div>
+            </div>
+
+            <!-- Pre-configured Quick Samples -->
+            <div class="samples-wrapper">
+              <span class="samples-label">Quick Samples:</span>
+              <button type="button" class="sample-chip" data-sample="The government announced that the moon will be declared the 29th state of the country tomorrow.">🌙 Moon 29th State (Fake)</button>
+              <button type="button" class="sample-chip" data-sample="Central bank announced a 25 basis point reduction in the benchmark interest rate.">📉 Bank Rate Cut (Real)</button>
+              <button type="button" class="sample-chip" data-sample="SHOCKING BOMBSHELL!! Miracle cure they don't want you to know!">⚡ Miracle Cure (Sensational)</button>
+            </div>
+
+            <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem;">
+              <button type="submit" class="btn btn-primary" id="btn-run-detect">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                Verify Claim Veracity
+              </button>
+              <button type="button" class="btn btn-secondary" id="btn-switch-batch-detect">Batch Detection</button>
+            </div>
+          </form>
+
+          <!-- Batch Detection Drawer (Collapsible) -->
+          <div id="batch-detect-drawer" style="display: none; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px dashed var(--border-subtle);">
+            <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: #38bdf8;">Batch Detection (Up to 50 Claims)</h4>
+            <div class="form-group">
+              <label for="batch-detect-input">Enter one claim per line:</label>
+              <textarea id="batch-detect-input" rows="4" placeholder="Claim 1...&#10;Claim 2..."></textarea>
+            </div>
+            <button type="button" class="btn btn-accent btn-sm" id="btn-run-batch-detect">Process Batch</button>
+          </div>
+        </div>
+
+        <!-- Detection Results Card -->
+        <div class="card" id="card-detect-results">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Detection Verdict & Analysis
+            </h3>
+            <span id="detect-status-indicator" class="brand-badge">Awaiting Input</span>
+          </div>
+
+          <div id="detect-empty-state" style="text-align: center; padding: 3rem 1rem; color: var(--text-dim);">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 0.75rem; opacity: 0.6;"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 14.14 14.14"/></svg>
+            <p>Enter a news claim on the left to inspect veracity, confidence score, and explainable AI signals.</p>
+          </div>
+
+          <div id="detect-output-container" style="display: none;">
+            <div id="detect-verdict-banner" class="verdict-banner real">
+              <div class="verdict-tag" id="detect-verdict-text">LIKELY_REAL</div>
+              <div class="confidence-meter">
+                <div class="confidence-val">
+                  <span>Confidence</span>
+                  <span id="detect-confidence-pct">88%</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div id="detect-confidence-fill" class="progress-bar-fill real" style="width: 88%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>AI Reasoning & Explanation:</label>
+              <p id="detect-explanation-text" class="explanation-text"></p>
+            </div>
+
+            <div class="form-group">
+              <label>Key Signals Detected:</label>
+              <div id="detect-signals-container" class="signals-list"></div>
+            </div>
+
+            <div class="form-group" style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-dim);">
+              <span>Detection ID: <strong id="detect-meta-id">#--</strong></span>
+              <span id="detect-meta-time">--</span>
+            </div>
+          </div>
+
+          <!-- Batch Results Table -->
+          <div id="batch-results-container" style="display: none; margin-top: 1rem;">
+            <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: #a5b4fc;">Batch Analysis Results</h4>
+            <div class="table-responsive">
+              <table class="data-table" id="batch-results-table">
+                <thead>
+                  <tr>
+                    <th>Claim</th>
+                    <th>Verdict</th>
+                    <th>Confidence</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------------
+         TAB 2: Fact-Checking & Source Verification (Module 4)
+         -------------------------------------------------------------------- -->
+    <section id="tab-factcheck" class="tab-pane">
+      <div class="hero-banner">
+        <div class="hero-text">
+          <h2>Authoritative Fact-Checking & Trusted Verification</h2>
+          <p>Cross-references claims against a 5-tier Domain Authority registry including Official Government Portals (.gov), Global Health Agencies, and Verified News Wires.</p>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-chip">
+            <div class="stat-chip-val" id="stat-whitelist-count">25+</div>
+            <div class="stat-chip-lbl">Verified Domains</div>
+          </div>
+          <div class="stat-chip">
+            <div class="stat-chip-val">5 Tiers</div>
+            <div class="stat-chip-lbl">Authority Weighting</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Fact Check Input Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Verify Against Trusted Sources
+            </h3>
+            <span class="brand-badge">POST /fact-check/verify</span>
+          </div>
+
+          <form id="form-factcheck">
+            <div class="form-group">
+              <label for="fc-claim-input">Claim or Assertion to Fact-Check:</label>
+              <textarea id="fc-claim-input" placeholder="e.g. Government announces subsidy scheme under PM-KMY portal..." required></textarea>
+            </div>
+
+            <div class="samples-wrapper">
+              <span class="samples-label">Samples:</span>
+              <button type="button" class="sample-chip" data-fc-sample="Government announced Rs 5000 monthly scheme for all citizens without registration.">🏛️ Fake Govt Scheme (Refuted)</button>
+              <button type="button" class="sample-chip" data-fc-sample="The government announced that the moon will be declared the 29th state of the country tomorrow.">🚀 Moon 29th State (Refuted)</button>
+              <button type="button" class="sample-chip" data-fc-sample="Central bank announced a 25 basis point reduction in the benchmark interest rate.">🏦 Interest Rate (Verified)</button>
+            </div>
+
+            <div class="grid-2" style="margin-top: 1rem; gap: 1rem;">
+              <div class="form-group">
+                <label for="fc-max-sources">Max Sources: <span id="fc-sources-val">5</span></label>
+                <input type="range" id="fc-max-sources" min="1" max="10" value="5" style="accent-color: var(--primary);">
+              </div>
+              <div class="form-group" style="display: flex; align-items: center; padding-top: 1.5rem;">
+                <label class="checkbox-group">
+                  <input type="checkbox" id="fc-gov-only">
+                  <span>Strict Government (.gov) Only</span>
+                </label>
+              </div>
+            </div>
+
+            <div style="margin-top: 1rem; display: flex; gap: 0.75rem;">
+              <button type="submit" class="btn btn-primary" id="btn-run-factcheck">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+                Run Multi-Source Verification
+              </button>
+              <button type="button" class="btn btn-secondary" id="btn-toggle-whitelist">View Whitelist</button>
+            </div>
+          </form>
+
+          <!-- Whitelist Drawer -->
+          <div id="whitelist-drawer" style="display: none; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+            <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: #38bdf8;">Trusted Source Whitelist (Tier 1 to 3)</h4>
+            <div id="whitelist-list" style="max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.8rem;"></div>
+          </div>
+        </div>
+
+        <!-- Fact Check Results Card -->
+        <div class="card" id="card-fc-results">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Fact-Check Evidence Report
+            </h3>
+            <span id="fc-status-badge" class="brand-badge">Awaiting Check</span>
+          </div>
+
+          <div id="fc-empty-state" style="text-align: center; padding: 3rem 1rem; color: var(--text-dim);">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 0.75rem; opacity: 0.6;"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+            <p>Run a fact check to cross-reference claims with official government records, gazettes, and verified news registries.</p>
+          </div>
+
+          <div id="fc-output-container" style="display: none;">
+            <div id="fc-verdict-banner" class="verdict-banner real">
+              <div>
+                <div class="verdict-tag" id="fc-verdict-text">VERIFIED</div>
+                <div style="font-size: 0.75rem; opacity: 0.85;" id="fc-verdict-subtext">Verdict: TRUE</div>
+              </div>
+              <div class="confidence-meter">
+                <div class="confidence-val">
+                  <span>Trust Score</span>
+                  <span id="fc-trust-score-val">90.0</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div id="fc-trust-score-fill" class="progress-bar-fill real" style="width: 90%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Evidence Summary:</label>
+              <p id="fc-summary-text" class="explanation-text"></p>
+            </div>
+
+            <div class="form-group">
+              <label>Evidence Citations & Stances (<span id="fc-evidence-count">0</span> sources):</label>
+              <div id="fc-evidence-items" class="evidence-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------------
+         TAB 3: NLP Studio (Module 2)
+         -------------------------------------------------------------------- -->
+    <section id="tab-nlp" class="tab-pane">
+      <div class="hero-banner">
+        <div class="hero-text">
+          <h2>NLP Studio & Linguistic Text Processing</h2>
+          <p>Deterministic text normalization, abbreviation-aware tokenization, Flesch readability, and clickbait heuristic analysis.</p>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-chip">
+            <div class="stat-chip-val">Flesch</div>
+            <div class="stat-chip-lbl">Readability</div>
+          </div>
+          <div class="stat-chip">
+            <div class="stat-chip-val">Sensationalism</div>
+            <div class="stat-chip-lbl">Clickbait Detector</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Input & Options Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              News Text Preprocessing & Analysis
+            </h3>
+            <span class="brand-badge">Module 2 NLP</span>
+          </div>
+
+          <form id="form-nlp">
+            <div class="form-group">
+              <label for="nlp-text-input">Raw News Article or Text (Min 20 chars):</label>
+              <textarea id="nlp-text-input" rows="6" placeholder="Paste news article with HTML tags, contractions (don't, they're), URLs, and sensational phrasing..." required></textarea>
+            </div>
+
+            <div class="samples-wrapper">
+              <span class="samples-label">Test Samples:</span>
+              <button type="button" class="sample-chip" data-nlp-sample="<p>SHOCKING BOMBSHELL!! You won't believe what Dr. Smith discovered about the secret moon project at https://fakenews.example.com/moon! It's completely TRUE!</p>">⚡ Dirty HTML + Clickbait</button>
+              <button type="button" class="sample-chip" data-nlp-sample="The Monetary Policy Committee announced a 25 basis point reduction in the key lending rate, citing moderating consumer price inflation and stable macroeconomic indicators.">📰 Objective Financial Report</button>
+            </div>
+
+            <!-- Cleaning Options -->
+            <div style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.85rem;">
+              <label class="checkbox-group">
+                <input type="checkbox" id="nlp-opt-html" checked>
+                <span>Strip HTML Tags</span>
+              </label>
+              <label class="checkbox-group">
+                <input type="checkbox" id="nlp-opt-contractions" checked>
+                <span>Expand Contractions</span>
+              </label>
+              <label class="checkbox-group">
+                <input type="checkbox" id="nlp-opt-urls" checked>
+                <span>Remove URLs</span>
+              </label>
+              <label class="checkbox-group">
+                <input type="checkbox" id="nlp-opt-stopwords">
+                <span>Filter Stopwords</span>
+              </label>
+            </div>
+
+            <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem;">
+              <button type="submit" class="btn btn-primary" id="btn-run-nlp">Analyze Text</button>
+              <button type="button" class="btn btn-secondary" id="btn-clean-only">Clean Text Only</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- NLP Metrics & Output Card -->
+        <div class="card" id="card-nlp-results">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Linguistic Metrics & Cleaned Preview
+            </h3>
+            <span id="nlp-status-indicator" class="brand-badge">Awaiting Text</span>
+          </div>
+
+          <div id="nlp-empty-state" style="text-align: center; padding: 3rem 1rem; color: var(--text-dim);">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 0.75rem; opacity: 0.6;"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/></svg>
+            <p>Submit text on the left to inspect readability levels, sensationalism scores, keyword frequencies, and tokenization.</p>
+          </div>
+
+          <div id="nlp-output-container" style="display: none;">
+            <!-- Linguistic metrics row -->
+            <div class="metrics-row">
+              <div class="metric-box">
+                <div class="metric-number" id="metric-word-count">0</div>
+                <div class="metric-label">Words</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-number" id="metric-sentence-count">0</div>
+                <div class="metric-label">Sentences</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-number" id="metric-flesch-score">0</div>
+                <div class="metric-label">Flesch Ease</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-number" id="metric-sensational-score">0.0</div>
+                <div class="metric-label">Sensationalism</div>
+              </div>
+            </div>
+
+            <!-- Readability & Clickbait Banners -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+              <div class="stat-chip" style="text-align: left;">
+                <div class="stat-chip-lbl">Reading Level</div>
+                <div style="font-weight: 600; color: #38bdf8;" id="nlp-reading-level">Standard</div>
+              </div>
+              <div class="stat-chip" style="text-align: left;">
+                <div class="stat-chip-lbl">Clickbait Status</div>
+                <div style="font-weight: 600;" id="nlp-sensational-status">Objective</div>
+              </div>
+            </div>
+
+            <!-- Top Keywords -->
+            <div class="form-group">
+              <label>Top Keywords Extracted:</label>
+              <div id="nlp-keywords-list" class="keywords-container"></div>
+            </div>
+
+            <!-- Cleaned Text Box -->
+            <div class="form-group" style="margin-top: 1rem;">
+              <label>Normalized Cleaned Text:</label>
+              <textarea id="nlp-cleaned-preview" readonly style="min-height: 80px; font-size: 0.85rem; color: #94a3b8;"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------------
+         TAB 4: User Dashboard & Reports (Module 5)
+         -------------------------------------------------------------------- -->
+    <section id="tab-dashboard" class="tab-pane">
+      <div class="hero-banner">
+        <div class="hero-text">
+          <h2>Personal Analytics & Report Generator</h2>
+          <p>Consolidated statistics on your news detection history, fact-checks, and exportable audit reports.</p>
+        </div>
+        <div class="hero-stats">
+          <button class="btn btn-accent btn-sm" id="btn-export-user-report">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Export JSON Report
+          </button>
+        </div>
+      </div>
+
+      <!-- User Stat Tiles -->
+      <div class="metrics-row" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+        <div class="metric-box">
+          <div class="metric-number" id="dash-total-detections">0</div>
+          <div class="metric-label">Total Detections</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-number" id="dash-total-factchecks">0</div>
+          <div class="metric-label">Fact Checks</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-number" id="dash-total-submissions">0</div>
+          <div class="metric-label">Articles Submitted</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-number" id="dash-avg-confidence">0.0%</div>
+          <div class="metric-label">Avg AI Confidence</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-number" id="dash-avg-trust">0.0</div>
+          <div class="metric-label">Avg Trust Score</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 1.5rem;">
+        <!-- Verdict Breakdown Chart -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Verdict Distribution</h3>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0.9rem;">
+            <div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.25rem;">
+                <span style="color: #34d399;">Likely Real</span>
+                <span id="dash-cnt-real">0</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div id="dash-bar-real" class="progress-bar-fill real" style="width: 0%;"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.25rem;">
+                <span style="color: #f87171;">Likely Fake</span>
+                <span id="dash-cnt-fake">0</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div id="dash-bar-fake" class="progress-bar-fill fake" style="width: 0%;"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.25rem;">
+                <span style="color: #fbbf24;">Uncertain</span>
+                <span id="dash-cnt-uncertain">0</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div id="dash-bar-uncertain" class="progress-bar-fill uncertain" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity Feed -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Recent Detections Feed</h3>
+          </div>
+          <div id="dash-recent-list" style="display: flex; flex-direction: column; gap: 0.6rem; max-height: 220px; overflow-y: auto;">
+            <p style="color: var(--text-dim); font-size: 0.85rem;">No recent detections recorded.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------------
+         TAB 5: Admin Control Panel (Module 5 Admin)
+         -------------------------------------------------------------------- -->
+    <section id="tab-admin" class="tab-pane">
+      <div class="hero-banner">
+        <div class="hero-text">
+          <h2>System Administration & Platform Metrics</h2>
+          <p>Global oversight across all registered users, threat monitoring, and system-wide reports.</p>
+        </div>
+        <div class="hero-stats">
+          <button class="btn btn-primary btn-sm" id="btn-export-admin-report">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            System Report (JSON)
+          </button>
+        </div>
+      </div>
+
+      <!-- Admin Global Metrics -->
+      <div class="metrics-row" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+        <div class="metric-box">
+          <div class="metric-number" id="admin-total-users">0</div>
+          <div class="metric-label">Registered Users</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-number" id="admin-active-users">0</div>
+          <div class="metric-label">Active Accounts</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-number" id="admin-total-detections">0</div>
+          <div class="metric-label">Global Detections</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-number" id="admin-total-factchecks">0</div>
+          <div class="metric-label">Fact Checks</div>
+        </div>
+      </div>
+
+      <!-- Top Flagged Claims & User Engagement Table -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+          <h3 class="card-title">Top Flagged Fake Claims Across Platform</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="admin-claims-table">
+            <thead>
+              <tr>
+                <th>Flagged Claim</th>
+                <th>Verdict</th>
+                <th>Times Detected</th>
+                <th>Avg Confidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="4" style="text-align: center; color: var(--text-dim);">No flagged claims data.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+          <h3 class="card-title">User Engagement & Activity Table</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="admin-users-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Detections</th>
+                <th>Fact Checks</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="6" style="text-align: center; color: var(--text-dim);">Loading users...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================================================================
+       Dialogs & Modals (<dialog>)
+       ====================================================================== -->
+
+  <!-- Sign In Modal -->
+  <dialog id="modal-login">
+    <div class="dialog-header">
+      <h3 class="dialog-title">Sign In</h3>
+      <button class="dialog-close" data-close="modal-login">&times;</button>
+    </div>
+    <form id="form-login">
+      <div class="form-group">
+        <label for="login-email">Email Address:</label>
+        <input type="email" id="login-email" autocomplete="email" required placeholder="user@example.com">
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password:</label>
+        <input type="password" id="login-password" autocomplete="current-password" required placeholder="••••••••">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" id="btn-submit-login">Sign In</button>
+      <p style="text-align: center; margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted);">
+        Don't have an account? <a href="#" id="link-switch-to-register" style="color: #38bdf8;">Register here</a>
+      </p>
+    </form>
+  </dialog>
+
+  <!-- Register Modal -->
+  <dialog id="modal-register">
+    <div class="dialog-header">
+      <h3 class="dialog-title">Create Account</h3>
+      <button class="dialog-close" data-close="modal-register">&times;</button>
+    </div>
+    <form id="form-register">
+      <div class="form-group">
+        <label for="reg-name">Full Name:</label>
+        <input type="text" id="reg-name" required placeholder="Jane Doe">
+      </div>
+      <div class="form-group">
+        <label for="reg-email">Email Address:</label>
+        <input type="email" id="reg-email" required placeholder="jane@example.com">
+      </div>
+      <div class="form-group">
+        <label for="reg-password">Password:</label>
+        <input type="password" id="reg-password" required placeholder="At least 8 chars with upper, lower, digit, symbol">
+        
+        <!-- Live password policy validator -->
+        <div class="pwd-policy-box">
+          <div class="policy-item" id="p-len"><span>•</span> At least 8 characters</div>
+          <div class="policy-item" id="p-upper"><span>•</span> One uppercase letter</div>
+          <div class="policy-item" id="p-lower"><span>•</span> One lowercase letter</div>
+          <div class="policy-item" id="p-num"><span>•</span> One number</div>
+          <div class="policy-item" id="p-special"><span>•</span> One special character (!@#$%^&*)</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="reg-confirm">Confirm Password:</label>
+        <input type="password" id="reg-confirm" required placeholder="Re-enter password">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" id="btn-submit-register">Create Account</button>
+    </form>
+  </dialog>
+
+  <!-- Toast Notification Stack -->
+  <div id="toast-container" aria-live="polite"></div>
+
+  <!-- Application Script -->
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  truthlens-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: truthlens-ai-detector
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8000
+      - DATABASE_URL=sqlite:///./news_detector.db
+      - JWT_SECRET_KEY=production_change_this_secret_key_12345
+      - JWT_ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=60
+      - REFRESH_TOKEN_EXPIRE_DAYS=7
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - GEMMA_MODEL=gemma3:4b
+      - AI_DETECTION_MODE=auto
+      - AI_TIMEOUT_SECONDS=30
+    volumes:
+      - ./data:/app/data
+      - sqlite_data:/app/db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  sqlite_data:
+    driver: local

@@ -1,9 +1,12 @@
-# AI Fake News Detector - Backend API
+# TruthLens AI - Fake News Detector & Fact-Checking Studio
 
-A production-ready FastAPI backend for the AI Fake News Detector project, featuring:
+A complete, production-ready full-stack AI system featuring:
 - **Module 1**: Secure User Authentication & Role-Based Access Control (RBAC)
 - **Module 2**: Deterministic News Input & NLP Text Processing Engine
 - **Module 3**: AI Detection & Fake News Classification with Google Gemma 3
+- **Module 4**: Fact-Checking & Official Government Registry Verification
+- **Module 5**: Analytics Dashboard & Exportable Audit Reports
+- **Module 6**: Modern Web Application Frontend & Containerized Deployment
 
 ---
 
@@ -48,6 +51,35 @@ A production-ready FastAPI backend for the AI Fake News Detector project, featur
 - **Batch Processing & Resilience**:
   - Instant offline fallback simulation for testing and low-latency environments.
   - `POST /detect/batch` for evaluating up to 50 claims concurrently.
+
+### 4. Fact-Checking & Government Registry Verification (Module 4)
+- **5-Tier Domain Authority Registry**:
+  - Tier 1: Official Government Portals (`.gov`, `.gov.in`, `pib.gov.in`, `rbi.org.in`) - 1.0 weight
+  - Tier 2: Certified Independent Fact-Checkers (`snopes.com`, `politifact.com`, `factcheck.org`) - 0.9 weight
+  - Tier 3: Global News Wires (`reuters.com`, `apnews.com`, `afp.com`) - 0.8 weight
+  - Tier 4: Major Press Publications (`bbc.com`, `thehindu.com`, etc.) - 0.65 weight
+  - Tier 5: General & Unverified web sources - 0.15 weight
+- **Automated Evidence Stance Classification**:
+  - Semantic and lexical overlap evaluation determining whether citations `SUPPORTS`, `REFUTES`, or provide `NOT_ENOUGH_INFO`.
+- **Authoritative Verification Pipeline**:
+  - Produces multi-source trust scores (0-100) and overall status (`VERIFIED`, `REFUTED`, `DISPUTED`, `UNPROVEN`).
+
+### 5. Analytics Dashboard & Reporting (Module 5)
+- **User Dashboard (`GET /dashboard/me`)**:
+  - Aggregates individual claim detections, fact-checks, linguistic sensationalism average, and personal activity feeds.
+- **Admin Control Panel (`GET /dashboard/admin`)**:
+  - Platform-wide threat monitoring, global verdict distributions, most-flagged fake news claims, and user engagement metrics.
+- **Exportable Audit Reports**:
+  - Machine-readable JSON reports for individual audit histories or full platform oversight.
+
+### 6. Modern Web Application & Deployment (Module 6)
+- **Full-Stack Web Interface (`/static`)**:
+  - Interactive Single-Page Application (SPA) designed with modern semantic HTML5, accessible forms, native `<dialog>` modals, and clean CSS variables.
+  - Dedicated interactive tabs for AI Detection (with pre-set quick samples), Fact-Checking, NLP Studio, Personal Dashboard, and Admin Control Panel.
+- **One-Click System Runner (`run.py`)**:
+  - Validates SQLite database tables, checks frontend assets, inspects AI runtime mode, and starts the full-stack server on `http://localhost:8000`.
+- **Containerized Deployment**:
+  - Production `Dockerfile` and `docker-compose.yml` with persistent volume storage and health check monitoring.
 
 ---
 
@@ -221,18 +253,54 @@ Request Body:
 
 ---
 
+## 🚀 Running the Full-Stack Application
+
+### Option 1: Native Python Runner (One-Click)
+```bash
+# Start server and run initial checks
+python run.py
+
+# Optionally automatically open the web browser
+python run.py --open
+```
+- **Web Application**: [http://localhost:8000](http://localhost:8000)
+- **Interactive Swagger Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Health Check Probe**: [http://localhost:8000/health](http://localhost:8000/health)
+
+### Option 2: Docker Containerization
+```bash
+# Build and run with Docker Compose
+docker compose up --build -d
+
+# Check container health status
+curl http://localhost:8000/health
+```
+
+---
+
 ## 🧪 Running Automated Tests
 
+The comprehensive automated test suite features **146 passing tests** across all 6 modules:
+
 ```bash
-# Run all 101 tests across all modules
+# Run the entire test suite (146 tests)
 python -m pytest -v
+
+# Run Frontend & Deployment tests (8 tests)
+python -m pytest tests/test_frontend.py -v
+
+# Run Dashboard & Reports tests (19 tests)
+python -m pytest tests/test_dashboard.py -v
+
+# Run Fact-Checking tests (18 tests)
+python -m pytest tests/test_fact_checking.py -v
 
 # Run AI Detection test suite (18 tests)
 python -m pytest tests/test_ai_detection.py -v
 
-# Run NLP test suite (30 tests)
+# Run NLP text processing suite (30 tests)
 python -m pytest tests/test_nlp.py -v
 
-# Run Authentication test suite (27 tests)
+# Run Authentication & Security suite (27 tests)
 python -m pytest tests/test_auth.py -v
 ```

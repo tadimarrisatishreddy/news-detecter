@@ -1,4 +1,7 @@
-from fastapi import Depends, FastAPI, HTTPException, status
+from pathlib import Path
+from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -45,6 +48,11 @@ app.include_router(news_router1)
 app.include_router(fact_checking_router)
 app.include_router(dashboard_router)
 
+# Mount Static Files (Module 6 Frontend)
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
 
 # Helper function for backward-compatibility in tests
 def create_access_token(user_id: int, role: str = "user") -> str:
@@ -52,8 +60,53 @@ def create_access_token(user_id: int, role: str = "user") -> str:
     return token
 
 
+@app.get("/health", tags=["General"])
+def health_check():
+    """System health check endpoint for monitoring & deployment."""
+    return {
+        "status": "healthy",
+        "service": "TruthLens AI Fake News Detector",
+        "version": "1.0.0",
+        "modules": [
+            "1. Authentication & RBAC",
+            "2. News Input & NLP Studio",
+            "3. AI Detection (Gemma 3)",
+            "4. Fact Checking & Government Verification",
+            "5. Dashboard & Reports",
+            "6. Modern Web Frontend & Deployment",
+        ],
+    }
+
+
+@app.get("/api", tags=["General"])
+def api_info():
+    """API overview and documentation links."""
+    return {
+        "message": "Welcome to AI Fake News Detector API",
+        "docs_url": "/docs",
+        "auth_endpoints": "/auth",
+    }
+
+
 @app.get("/", tags=["General"])
-def home():
+def home(request: Request):
+    """
+    Root endpoint:
+    - Serves the TruthLens Web Application (Module 6) when accessed via browser.
+    - Returns JSON API metadata when requested with Accept: application/json.
+    """
+    accept = request.headers.get("accept", "")
+    if "application/json" in accept and "text/html" not in accept:
+        return {
+            "message": "Welcome to AI Fake News Detector API",
+            "docs_url": "/docs",
+            "auth_endpoints": "/auth",
+        }
+
+    index_path = STATIC_DIR / "index.html"
+    if index_path.exists():
+        return HTMLResponse(content=index_path.read_text(encoding="utf-8"))
+
     return {
         "message": "Welcome to AI Fake News Detector API",
         "docs_url": "/docs",
