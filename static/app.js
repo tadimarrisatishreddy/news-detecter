@@ -362,8 +362,22 @@
       chip.addEventListener('click', () => {
         claimInput.value = chip.getAttribute('data-sample');
         claimInput.focus();
+        updateDetectCounter();
       });
     });
+
+    // Live character/word counter
+    function updateDetectCounter() {
+      const text = claimInput.value;
+      const chars = text.length;
+      const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+      const readSecs = Math.ceil(words / 4);
+      const counterEl = document.getElementById('detect-char-count');
+      const readEl = document.getElementById('detect-read-time');
+      if (counterEl) counterEl.textContent = `${chars} characters • ${words} words`;
+      if (readEl) readEl.textContent = readSecs < 60 ? `~${readSecs}s reading time` : `~${Math.ceil(readSecs / 60)}m reading time`;
+    }
+    claimInput?.addEventListener('input', updateDetectCounter);
 
     // Single Claim Detection Submit
     form?.addEventListener('submit', async (e) => {

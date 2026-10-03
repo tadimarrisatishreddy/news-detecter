@@ -88,11 +88,11 @@ def api_info():
     }
 
 
-@app.get("/", tags=["General"])
+@app.get("/", tags=["Web Pages"])
 def home(request: Request):
     """
     Root endpoint:
-    - Serves the TruthLens Web Application (Module 6) when accessed via browser.
+    - Serves the TruthLens Main Studio page (Module 6) when accessed via browser.
     - Returns JSON API metadata when requested with Accept: application/json.
     """
     accept = request.headers.get("accept", "")
@@ -112,6 +112,34 @@ def home(request: Request):
         "docs_url": "/docs",
         "auth_endpoints": "/auth",
     }
+
+
+@app.get("/login", tags=["Web Pages"], response_class=HTMLResponse)
+def login_page():
+    """Serves the dedicated Login page."""
+    login_path = STATIC_DIR / "login.html"
+    if login_path.exists():
+        return HTMLResponse(content=login_path.read_text(encoding="utf-8"))
+    raise HTTPException(status_code=404, detail="Login page not found")
+
+
+@app.get("/register", tags=["Web Pages"], response_class=HTMLResponse)
+def register_page():
+    """Serves the dedicated Register page."""
+    register_path = STATIC_DIR / "register.html"
+    if register_path.exists():
+        return HTMLResponse(content=register_path.read_text(encoding="utf-8"))
+    raise HTTPException(status_code=404, detail="Register page not found")
+
+
+@app.get("/dashboard-page", tags=["Web Pages"], response_class=HTMLResponse)
+@app.get("/dashboard.html", tags=["Web Pages"], response_class=HTMLResponse)
+def dashboard_page():
+    """Serves the dedicated Dashboard & Reports analytics page."""
+    dash_path = STATIC_DIR / "dashboard.html"
+    if dash_path.exists():
+        return HTMLResponse(content=dash_path.read_text(encoding="utf-8"))
+    raise HTTPException(status_code=404, detail="Dashboard page not found")
 
 
 @app.get("/profile", tags=["User Authentication"], deprecated=True)
@@ -155,6 +183,7 @@ def detect_news(
         "verdict": new_detection.verdict,
         "confidence": new_detection.confidence,
         "explanation": new_detection.explanation,
+        "key_signals": result.get("key_signals", []),
         "created_at": new_detection.created_at,
     }
 

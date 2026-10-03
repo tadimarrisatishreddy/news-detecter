@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account - TruthLens AI</title>
+  <meta name="description" content="Register an account for TruthLens AI Fake News Detector.">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    .auth-page-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      background: radial-gradient(circle at top, rgba(6, 182, 212, 0.12) 0%, transparent 60%), var(--bg-app);
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 480px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 2.25rem 2rem;
+      box-shadow: var(--shadow-lg);
+      animation: fadeIn 0.3s ease-out;
+    }
+    .auth-brand {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.75rem;
+      text-align: center;
+    }
+    .auth-brand h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #818cf8 0%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .auth-subtitle {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+    .auth-footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .auth-footer a {
+      color: #38bdf8;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .auth-footer a:hover {
+      text-decoration: underline;
+    }
+    .back-home-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 1.25rem;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      text-decoration: none;
+    }
+    .back-home-link:hover {
+      color: var(--text-main);
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-page-wrapper">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <a href="/" style="text-decoration: none;">
+          <img src="/static/favicon.svg" alt="TruthLens Logo" width="48" height="48">
+        </a>
+        <h1>Create TruthLens Account</h1>
+        <p class="auth-subtitle">Join the AI truth verification platform</p>
+      </div>
+
+      <form id="page-register-form">
+        <div class="form-group">
+          <label for="reg-name">Full Name</label>
+          <input type="text" id="reg-name" required placeholder="Dr. Jane Doe">
+        </div>
+
+        <div class="form-group">
+          <label for="reg-email">Email Address</label>
+          <input type="email" id="reg-email" required placeholder="jane@example.com">
+        </div>
+
+        <div class="form-group">
+          <label for="reg-password">Password</label>
+          <input type="password" id="reg-password" required placeholder="Choose a strong password">
+          
+          <div class="pwd-policy-box">
+            <div class="policy-item" id="p-len"><span>•</span> At least 8 characters</div>
+            <div class="policy-item" id="p-upper"><span>•</span> One uppercase letter (A-Z)</div>
+            <div class="policy-item" id="p-lower"><span>•</span> One lowercase letter (a-z)</div>
+            <div class="policy-item" id="p-num"><span>•</span> One number (0-9)</div>
+            <div class="policy-item" id="p-special"><span>•</span> One special character (!@#$%^&*)</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-confirm">Confirm Password</label>
+          <input type="password" id="reg-confirm" required placeholder="Re-type your password">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.75rem;" id="btn-submit-register">
+          Complete Registration
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Already have an account? <a href="/login">Sign in here</a>
+      </div>
+    </div>
+
+    <a href="/" class="back-home-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+      Return to Main Studio
+    </a>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script>
+    const form = document.getElementById('page-register-form');
+    const pwdInput = document.getElementById('reg-password');
+    const submitBtn = document.getElementById('btn-submit-register');
+
+    // Live password policy feedback
+    pwdInput.addEventListener('input', () => {
+      const val = pwdInput.value;
+      setCheck('p-len', val.length >= 8);
+      setCheck('p-upper', /[A-Z]/.test(val));
+      setCheck('p-lower', /[a-z]/.test(val));
+      setCheck('p-num', /[0-9]/.test(val));
+      setCheck('p-special', /[!@#$%^&*(),.?":{}|<>]/.test(val));
+    });
+
+    function setCheck(id, ok) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (ok) {
+        el.classList.add('valid');
+        el.querySelector('span').textContent = '✓';
+      } else {
+        el.classList.remove('valid');
+        el.querySelector('span').textContent = '•';
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const full_name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = pwdInput.value;
+      const password_confirm = document.getElementById('reg-confirm').value;
+
+      if (password !== password_confirm) {
+        showToast('Password confirmation does not match.', 'error');
+        return;
+      }
+
+      try {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating account...';
+
+        const res = await fetch('/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            full_name,
+            email,
+            password,
+            password_confirm,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || data.message || 'Registration failed');
+        }
+
+        showToast('Account created! Redirecting to sign in...', 'success');
+        setTimeout(() => {
+          window.location.href = '/login?registered=1';
+        }, 1000);
+      } catch (err) {
+        showToast(err.message, 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Complete Registration';
+      }
+    });
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+  </script>
+</body>
+</html>

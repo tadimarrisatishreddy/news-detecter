@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard & Reports - TruthLens AI</title>
+  <meta name="description" content="Personal and administrative truth analytics, detection history, and exportable reports.">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    @media print {
+      .app-header, .btn-group, .btn, .no-print {
+        display: none !important;
+      }
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      .card, .hero-banner, .metric-box {
+        background: #ffffff !important;
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        color: #000 !important;
+      }
+      .metric-number, .stat-chip-val {
+        color: #000 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ======================================================================
+       App Header & Multi-Page Navigation
+       ====================================================================== -->
+  <header class="app-header">
+    <div class="header-container">
+      <a href="/" class="brand">
+        <div class="brand-icon">
+          <img src="/static/favicon.svg" alt="TruthLens Logo" width="36" height="36">
+        </div>
+        <div class="brand-text">
+          <h1>TruthLens AI</h1>
+        </div>
+        <span class="brand-badge">Dashboard & Reports</span>
+      </a>
+
+      <nav aria-label="Main Navigation">
+        <ul class="nav-tabs">
+          <li>
+            <a href="/" class="nav-tab-btn" style="text-decoration: none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              Main Studio
+            </a>
+          </li>
+          <li>
+            <a href="/dashboard-page" class="nav-tab-btn active" style="text-decoration: none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+              Dashboard & Reports
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="user-controls">
+        <div id="auth-guest-section" class="btn-group" style="display: none;">
+          <a href="/login?redirect=/dashboard-page" class="btn btn-secondary btn-sm">Sign In</a>
+          <a href="/register" class="btn btn-primary btn-sm">Register</a>
+        </div>
+
+        <div id="auth-user-section" class="user-status-card">
+          <div class="user-avatar" id="header-user-avatar">U</div>
+          <div class="user-info-text">
+            <span class="user-name" id="header-user-name">User</span>
+            <span class="user-role-tag" id="header-user-role">USER</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-logout" title="Sign Out">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================================================================
+       Dashboard Content
+       ====================================================================== -->
+  <main class="app-main">
+
+    <!-- Hero Banner with Export Actions -->
+    <div class="hero-banner">
+      <div class="hero-text">
+        <h2 id="dash-greeting">Personal Truth Analytics & Audit Reports</h2>
+        <p>Comprehensive overview of your news claims verification history, confidence calibrations, and exportable reports.</p>
+      </div>
+      <div class="hero-stats no-print">
+        <button class="btn btn-primary btn-sm" id="btn-export-report">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Export JSON Report
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="window.print()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+          Print / PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Personal Metrics Grid -->
+    <div class="metrics-row" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+      <div class="metric-box">
+        <div class="metric-number" id="dash-total-detections">0</div>
+        <div class="metric-label">AI Detections</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-number" id="dash-total-factchecks">0</div>
+        <div class="metric-label">Fact Checks</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-number" id="dash-total-submissions">0</div>
+        <div class="metric-label">Submissions</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-number" id="dash-avg-confidence">0.0%</div>
+        <div class="metric-label">Avg AI Confidence</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-number" id="dash-avg-trust">0.0</div>
+        <div class="metric-label">Avg Trust Score</div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top: 1.5rem;">
+      <!-- Verdict Distribution Breakdown -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+            AI Detection Verdict Breakdown
+          </h3>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.825rem; margin-bottom: 0.3rem;">
+              <span style="color: #34d399; font-weight: 600;">Likely Real</span>
+              <span id="dash-cnt-real">0</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="dash-bar-real" class="progress-bar-fill real" style="width: 0%;"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.825rem; margin-bottom: 0.3rem;">
+              <span style="color: #f87171; font-weight: 600;">Likely Fake (Hoax)</span>
+              <span id="dash-cnt-fake">0</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="dash-bar-fake" class="progress-bar-fill fake" style="width: 0%;"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.825rem; margin-bottom: 0.3rem;">
+              <span style="color: #fbbf24; font-weight: 600;">Uncertain / Inconclusive</span>
+              <span id="dash-cnt-uncertain">0</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="dash-bar-uncertain" class="progress-bar-fill uncertain" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fact-Check Verification Status Breakdown -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Fact-Checking Verification Status
+          </h3>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.825rem; margin-bottom: 0.3rem;">
+              <span style="color: #34d399; font-weight: 600;">Verified (True)</span>
+              <span id="dash-fc-verified">0</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="dash-bar-verified" class="progress-bar-fill real" style="width: 0%;"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.825rem; margin-bottom: 0.3rem;">
+              <span style="color: #f87171; font-weight: 600;">Refuted (Debunked)</span>
+              <span id="dash-fc-refuted">0</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="dash-bar-refuted" class="progress-bar-fill fake" style="width: 0%;"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.825rem; margin-bottom: 0.3rem;">
+              <span style="color: #94a3b8; font-weight: 600;">Unproven / Disputed</span>
+              <span id="dash-fc-other">0</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="dash-bar-other" class="progress-bar-fill" style="width: 0%; background: #64748b;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity Feeds -->
+    <div class="card" style="margin-top: 1.5rem;">
+      <div class="card-header">
+        <h3 class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Recent Activity Timeline
+        </h3>
+      </div>
+      <div id="dash-recent-feed" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 280px; overflow-y: auto;">
+        <p style="color: var(--text-dim); font-size: 0.85rem;">Loading activity...</p>
+      </div>
+    </div>
+
+    <!-- Admin Platform Oversight Section (Only visible for Admins) -->
+    <div id="admin-platform-section" style="display: none; margin-top: 2rem;">
+      <div class="hero-banner" style="background: linear-gradient(180deg, rgba(79, 70, 229, 0.25) 0%, rgba(17, 24, 39, 0.8) 100%);">
+        <div class="hero-text">
+          <h2>🛡️ Platform Oversight (Admin Center)</h2>
+          <p>Global threat monitoring, most-flagged fake news claims, and user engagement table.</p>
+        </div>
+        <div class="hero-stats no-print">
+          <button class="btn btn-accent btn-sm" id="btn-export-admin-report">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Export System Report (JSON)
+          </button>
+        </div>
+      </div>
+
+      <div class="metrics-row" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+        <div class="metric-box">
+          <div class="metric-number" id="adm-total-users">0</div>
+          <div class="metric-label">Total Users</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-number" id="adm-active-users">0</div>
+          <div class="metric-label">Active Accounts</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-number" id="adm-total-detections">0</div>
+          <div class="metric-label">Global Detections</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-number" id="adm-total-factchecks">0</div>
+          <div class="metric-label">Fact Checks</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+          <h3 class="card-title">Top Flagged Fake Claims Platform-Wide</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="adm-claims-table">
+            <thead>
+              <tr>
+                <th>Flagged Claim</th>
+                <th>Verdict</th>
+                <th>Times Detected</th>
+                <th>Avg Confidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="4" style="text-align: center; color: var(--text-dim);">No claims flagged yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+          <h3 class="card-title">Registered User Activity Table</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="adm-users-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Detections</th>
+                <th>Fact Checks</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="6" style="text-align: center; color: var(--text-dim);">Loading users...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="toast-container"></div>
+
+  <script>
+    let currentUser = null;
+    let accessToken = localStorage.getItem('access_token');
+    let refreshToken = localStorage.getItem('refresh_token');
+
+    async function api(endpoint, options = {}) {
+      const headers = options.headers || {};
+      headers['Content-Type'] = 'application/json';
+      if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+      options.headers = headers;
+
+      let res = await fetch(endpoint, options);
+      if (res.status === 401 && refreshToken) {
+        // Attempt refresh
+        const rRes = await fetch('/auth/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+        if (rRes.ok) {
+          const rData = await rRes.json();
+          accessToken = rData.access_token;
+          localStorage.setItem('access_token', accessToken);
+          headers['Authorization'] = `Bearer ${accessToken}`;
+          options.headers = headers;
+          res = await fetch(endpoint, options);
+        }
+      }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || 'Request failed');
+      }
+      return await res.json();
+    }
+
+    async function init() {
+      if (!accessToken) {
+        window.location.href = '/login?redirect=/dashboard-page';
+        return;
+      }
+
+      try {
+        currentUser = await api('/auth/me');
+        updateHeaderUser();
+        await loadDashboardData();
+
+        if (currentUser.role === 'admin') {
+          document.getElementById('admin-platform-section').style.display = 'block';
+          await loadAdminData();
+        }
+      } catch (e) {
+        console.error(e);
+        localStorage.removeItem('access_token');
+        window.location.href = '/login?redirect=/dashboard-page';
+      }
+    }
+
+    function updateHeaderUser() {
+      const avatar = document.getElementById('header-user-avatar');
+      const name = document.getElementById('header-user-name');
+      const role = document.getElementById('header-user-role');
+      const greeting = document.getElementById('dash-greeting');
+
+      if (avatar) avatar.textContent = (currentUser.full_name || 'U').charAt(0).toUpperCase();
+      if (name) name.textContent = currentUser.full_name || currentUser.email;
+      if (role) role.textContent = (currentUser.role || 'user').toUpperCase();
+      if (greeting) greeting.textContent = `Welcome back, ${currentUser.full_name || 'Truth Seeker'}!`;
+    }
+
+    async function loadDashboardData() {
+      const data = await api('/dashboard/me');
+
+      document.getElementById('dash-total-detections').textContent = data.total_detections || 0;
+      document.getElementById('dash-total-factchecks').textContent = data.total_fact_checks || 0;
+      document.getElementById('dash-total-submissions').textContent = data.total_submissions || 0;
+      document.getElementById('dash-avg-confidence').textContent = `${Math.round((data.avg_detection_confidence || 0) * 100)}%`;
+      document.getElementById('dash-avg-trust').textContent = Math.round(data.avg_trust_score || 0);
+
+      // Detection breakdown
+      const vb = data.verdict_breakdown || {};
+      const totalDet = (vb.LIKELY_REAL || 0) + (vb.LIKELY_FAKE || 0) + (vb.UNCERTAIN || 0);
+
+      document.getElementById('dash-cnt-real').textContent = vb.LIKELY_REAL || 0;
+      document.getElementById('dash-cnt-fake').textContent = vb.LIKELY_FAKE || 0;
+      document.getElementById('dash-cnt-uncertain').textContent = vb.UNCERTAIN || 0;
+
+      if (totalDet > 0) {
+        document.getElementById('dash-bar-real').style.width = `${((vb.LIKELY_REAL || 0) / totalDet) * 100}%`;
+        document.getElementById('dash-bar-fake').style.width = `${((vb.LIKELY_FAKE || 0) / totalDet) * 100}%`;
+        document.getElementById('dash-bar-uncertain').style.width = `${((vb.UNCERTAIN || 0) / totalDet) * 100}%`;
+      }
+
+      // Fact-check breakdown
+      const fb = data.fact_check_breakdown || {};
+      const totalFC = (fb.VERIFIED || 0) + (fb.REFUTED || 0) + (fb.DISPUTED || 0) + (fb.UNPROVEN || 0);
+
+      document.getElementById('dash-fc-verified').textContent = fb.VERIFIED || 0;
+      document.getElementById('dash-fc-refuted').textContent = fb.REFUTED || 0;
+      document.getElementById('dash-fc-other').textContent = (fb.DISPUTED || 0) + (fb.UNPROVEN || 0);
+
+      if (totalFC > 0) {
+        document.getElementById('dash-bar-verified').style.width = `${((fb.VERIFIED || 0) / totalFC) * 100}%`;
+        document.getElementById('dash-bar-refuted').style.width = `${((fb.REFUTED || 0) / totalFC) * 100}%`;
+        document.getElementById('dash-bar-other').style.width = `${(((fb.DISPUTED || 0) + (fb.UNPROVEN || 0)) / totalFC) * 100}%`;
+      }
+
+      // Recent feed
+      const feed = document.getElementById('dash-recent-feed');
+      feed.innerHTML = '';
+      const recent = data.recent_detections || [];
+      if (recent.length === 0) {
+        feed.innerHTML = '<p style="color:var(--text-dim); font-size:0.85rem;">No detections recorded yet. Start by analyzing news in the Main Studio!</p>';
+      } else {
+        recent.forEach((item) => {
+          const div = document.createElement('div');
+          div.style.padding = '0.75rem';
+          div.style.background = 'rgba(255,255,255,0.02)';
+          div.style.borderRadius = 'var(--radius-sm)';
+          div.style.border = '1px solid var(--border-subtle)';
+          div.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+              <strong style="color:#e2e8f0; font-size:0.9rem;">${escapeHtml(item.claim)}</strong>
+              <span class="stance-pill ${item.verdict === 'LIKELY_REAL' ? 'stance-supports' : item.verdict === 'LIKELY_FAKE' ? 'stance-refutes' : 'stance-neutral'}">${item.verdict || 'UNCERTAIN'}</span>
+            </div>
+            <div style="color:var(--text-dim); font-size:0.75rem; display:flex; justify-content:space-between;">
+              <span>Confidence: ${Math.round((item.confidence || 0) * 100)}%</span>
+              <span>${new Date(item.created_at).toLocaleString()}</span>
+            </div>
+          `;
+          feed.appendChild(div);
+        });
+      }
+    }
+
+    async function loadAdminData() {
+      try {
+        const stats = await api('/dashboard/admin');
+        document.getElementById('adm-total-users').textContent = stats.total_users || 0;
+        document.getElementById('adm-active-users').textContent = stats.active_users || 0;
+        document.getElementById('adm-total-detections').textContent = stats.total_detections || 0;
+        document.getElementById('adm-total-factchecks').textContent = stats.total_fact_checks || 0;
+
+        // Top claims
+        const claimsTbody = document.querySelector('#adm-claims-table tbody');
+        claimsTbody.innerHTML = '';
+        const claims = stats.top_flagged_claims || [];
+        if (claims.length === 0) {
+          claimsTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-dim);">No claims flagged.</td></tr>';
+        } else {
+          claims.forEach((c) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${escapeHtml(c.claim)}</td>
+              <td><span class="stance-pill stance-refutes">${escapeHtml(c.verdict)}</span></td>
+              <td>${c.times_detected}</td>
+              <td>${Math.round((c.avg_confidence || 0) * 100)}%</td>
+            `;
+            claimsTbody.appendChild(tr);
+          });
+        }
+
+        // Users
+        const usersData = await api('/dashboard/admin/users');
+        const usersTbody = document.querySelector('#adm-users-table tbody');
+        usersTbody.innerHTML = '';
+        (usersData.users || []).forEach((u) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>${escapeHtml(u.full_name)}</strong></td>
+            <td>${escapeHtml(u.email)}</td>
+            <td><span class="tier-badge ${u.role === 'admin' ? 'tier-1' : 'tier-4'}">${u.role.toUpperCase()}</span></td>
+            <td>${u.total_detections}</td>
+            <td>${u.total_fact_checks}</td>
+            <td>${u.is_active ? '<span style="color:var(--verdict-real);">● Active</span>' : '<span style="color:var(--verdict-fake);">● Inactive</span>'}</td>
+          `;
+          usersTbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Export Reports
+    document.getElementById('btn-export-report')?.addEventListener('click', async () => {
+      try {
+        const report = await api('/dashboard/me/report');
+        downloadJson(report, `truthlens-user-report-${Date.now()}.json`);
+        showToast('Personal report exported!', 'success');
+      } catch (e) {
+        showToast(`Export error: ${e.message}`, 'error');
+      }
+    });
+
+    document.getElementById('btn-export-admin-report')?.addEventListener('click', async () => {
+      try {
+        const report = await api('/dashboard/admin/report');
+        downloadJson(report, `truthlens-system-report-${Date.now()}.json`);
+        showToast('System report exported!', 'success');
+      } catch (e) {
+        showToast(`Export error: ${e.message}`, 'error');
+      }
+    });
+
+    // Logout
+    document.getElementById('btn-logout')?.addEventListener('click', async () => {
+      if (confirm('Sign out from TruthLens AI?')) {
+        try {
+          if (refreshToken) {
+            await api('/auth/logout', {
+              method: 'POST',
+              body: JSON.stringify({ refresh_token: refreshToken }),
+            });
+          }
+        } catch (e) {}
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        window.location.href = '/login';
+      }
+    });
+
+    function downloadJson(obj, filename) {
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(obj, null, 2));
+      const a = document.createElement('a');
+      a.setAttribute('href', dataStr);
+      a.setAttribute('download', filename);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

@@ -46,16 +46,10 @@
             </button>
           </li>
           <li>
-            <button class="nav-tab-btn" data-tab="tab-dashboard">
+            <a href="/dashboard-page" class="nav-tab-btn" style="text-decoration: none;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-              Dashboard
-            </button>
-          </li>
-          <li>
-            <button class="nav-tab-btn" data-tab="tab-admin" id="nav-btn-admin" style="display: none;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              Admin Panel
-            </button>
+              Dashboard & Reports
+            </a>
           </li>
         </ul>
       </nav>
@@ -72,6 +66,9 @@
             <span class="user-name" id="header-user-name">User</span>
             <span class="user-role-tag" id="header-user-role">USER</span>
           </div>
+          <a href="/dashboard-page" class="btn btn-secondary btn-sm" title="Go to Dashboard">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          </a>
           <button class="btn btn-secondary btn-sm" id="btn-logout" title="Sign Out">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
           </button>
@@ -121,7 +118,11 @@
             <div class="form-group">
               <label for="detect-claim-input">News Statement or Headline to Verify:</label>
               <textarea id="detect-claim-input" placeholder="Paste a headline, social media post, or news article text (min 5 characters)..." required></textarea>
-              <div class="input-hint">Requires an active session. If not logged in, you can test with default demo mode.</div>
+              <div class="input-counter-bar">
+                <span id="detect-char-count">0 characters • 0 words</span>
+                <span id="detect-read-time">~0s reading time</span>
+              </div>
+              <div class="input-hint">💡 Requires an active session. If not logged in, you can test with default demo mode.</div>
             </div>
 
             <!-- Pre-configured Quick Samples -->
