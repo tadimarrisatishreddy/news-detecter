@@ -27,6 +27,11 @@ class User(Base):
         nullable=False,
     )
 
+    last_login_at = Column(
+        DateTime,
+        nullable=True,
+    )
+
     # Relationships
     detections = relationship(
         "DetectionHistory",
@@ -36,6 +41,12 @@ class User(Base):
 
     analyses = relationship(
         "Analysis",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    login_history = relationship(
+        "LoginHistory",
         back_populates="user",
         cascade="all, delete-orphan",
     )
@@ -69,6 +80,25 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+
+
+class LoginHistory(Base):
+    __tablename__ = "login_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=True)
+    email = Column(String, index=True, nullable=False)
+    ip_address = Column(String, nullable=True)
+    user_agent = Column(String, nullable=True)
+    status = Column(String, default="success", nullable=False)  # "success" or "failed"
+    failure_reason = Column(String, nullable=True)
+    login_time = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    user = relationship("User", back_populates="login_history")
 
 
 class RevokedToken(Base):

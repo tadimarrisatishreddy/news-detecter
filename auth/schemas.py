@@ -41,6 +41,21 @@ class UserResponse(BaseModel):
     is_active: bool
     is_verified: bool
     created_at: datetime
+    last_login_at: Optional[datetime] = None
+
+
+class LoginHistoryItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: Optional[int] = None
+    email: str
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    status: str
+    failure_reason: Optional[str] = None
+    login_time: datetime
+
 
 
 class TokenResponse(BaseModel):

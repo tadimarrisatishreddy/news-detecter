@@ -1,7 +1,7 @@
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Header, status
+from fastapi import APIRouter, Depends, HTTPException, Header, Request, status
 from sqlalchemy.orm import Session
 
 from config import (
@@ -12,6 +12,7 @@ from config import (
 from database import SessionLocal
 from models import (
     EmailVerificationToken,
+    LoginHistory,
     PasswordResetToken,
     RevokedToken,
     User,
@@ -34,6 +35,7 @@ from auth.password import hash_password, verify_password
 from auth.schemas import (
     ChangePasswordRequest,
     ForgotPasswordRequest,
+    LoginHistoryItem,
     MessageResponse,
     RefreshTokenRequest,
     RefreshTokenResponse,
@@ -105,18 +107,37 @@ def register(
 )
 def login(
     data: UserLoginRequest,
+    request: Request,
     db: Session = Depends(get_db),
 ):
     """
     Authenticates user with email and password:
     - Constant-time/secure password verification
-    - Generic error response to prevent user enumeration
+    - Records user login data & audit history in database
     - Rejects inactive accounts
     - Returns JWT access token and refresh token
     """
+    client_ip = request.client.host if request.client else None
+    if "x-forwarded-for" in request.headers:
+        client_ip = request.headers["x-forwarded-for"].split(",")[0].strip()
+    user_agent = request.headers.get("user-agent")
+    now = datetime.now(timezone.utc)
+
     user = db.query(User).filter(User.email == data.email.lower().strip()).first()
 
     if user is None or not verify_password(data.password, user.hashed_password):
+        login_record = LoginHistory(
+            user_id=user.id if user else None,
+            email=data.email.lower().strip(),
+            ip_address=client_ip,
+            user_agent=user_agent,
+            status="failed",
+            failure_reason="Incorrect email or password",
+            login_time=now,
+        )
+        db.add(login_record)
+        db.commit()
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -124,10 +145,35 @@ def login(
         )
 
     if not user.is_active:
+        login_record = LoginHistory(
+            user_id=user.id,
+            email=user.email,
+            ip_address=client_ip,
+            user_agent=user_agent,
+            status="failed",
+            failure_reason="Inactive user account",
+            login_time=now,
+        )
+        db.add(login_record)
+        db.commit()
+
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Inactive user account. Please contact support.",
         )
+
+    # Record successful login in database & update last login timestamp
+    user.last_login_at = now
+    login_record = LoginHistory(
+        user_id=user.id,
+        email=user.email,
+        ip_address=client_ip,
+        user_agent=user_agent,
+        status="success",
+        login_time=now,
+    )
+    db.add(login_record)
+    db.commit()
 
     access_token, _, access_expires_in = create_access_token(
         user_id=user.id,
@@ -140,6 +186,26 @@ def login(
         refresh_token=refresh_token,
         token_type="bearer",
         expires_in=access_expires_in,
+    )
+
+
+@router.get(
+    "/login-history",
+    response_model=list[LoginHistoryItem],
+    summary="Get recent login history for authenticated user",
+)
+def get_user_login_history(
+    limit: int = 20,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Returns recent login events and audit timestamps for current user."""
+    return (
+        db.query(LoginHistory)
+        .filter(LoginHistory.user_id == current_user.id)
+        .order_by(LoginHistory.id.desc())
+        .limit(limit)
+        .all()
     )
 
 

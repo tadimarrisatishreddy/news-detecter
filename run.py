@@ -30,8 +30,8 @@ def check_prerequisites():
         print("[!] Warning: Python 3.10+ is recommended.")
 
     # 2. Check Database initialization
-    from database import Base, engine
-    Base.metadata.create_all(bind=engine)
+    from database import init_db
+    init_db()
     print("[*] Database SQLite Tables: OK (news_detector.db)")
 
     # 3. Check Static UI Assets

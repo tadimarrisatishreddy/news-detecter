@@ -7,12 +7,18 @@
   'use strict';
 
   // --------------------------------------------------------------------------
-  // Application State
   // --------------------------------------------------------------------------
+  // Application State & Smart API Base
+  // --------------------------------------------------------------------------
+  const API_BASE = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8000'))
+    ? 'http://127.0.0.1:8000'
+    : '';
+
   const state = {
     user: null,
     accessToken: localStorage.getItem('access_token') || null,
     refreshToken: localStorage.getItem('refresh_token') || null,
+    historyDetections: [],
   };
 
   // --------------------------------------------------------------------------
@@ -45,6 +51,7 @@
   // API Client with Automatic Authentication & Refresh
   // --------------------------------------------------------------------------
   async function apiRequest(endpoint, options = {}) {
+    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
     const headers = options.headers || {};
     if (!headers['Content-Type'] && !(options.body instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
@@ -56,7 +63,7 @@
 
     options.headers = headers;
 
-    let response = await fetch(endpoint, options);
+    let response = await fetch(url, options);
 
     // Auto-refresh token on 401 if refresh token is available
     if (response.status === 401 && state.refreshToken && !endpoint.includes('/auth/refresh')) {
@@ -64,7 +71,7 @@
       if (refreshed) {
         headers['Authorization'] = `Bearer ${state.accessToken}`;
         options.headers = headers;
-        response = await fetch(endpoint, options);
+        response = await fetch(url, options);
       }
     }
 
@@ -84,7 +91,7 @@
 
   async function attemptTokenRefresh() {
     try {
-      const res = await fetch('/auth/refresh', {
+      const res = await fetch(`${API_BASE}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh_token: state.refreshToken }),
@@ -117,9 +124,12 @@
     state.accessToken = null;
     state.refreshToken = null;
     state.user = null;
+    state.historyDetections = [];
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     updateAuthUI();
+    renderHistoryTable([]);
+    updateHistoryMetrics([]);
   }
 
   async function fetchUserProfile() {
@@ -131,6 +141,7 @@
       const user = await apiRequest('/auth/me');
       state.user = user;
       updateAuthUI();
+      loadDetectionHistory();
     } catch (e) {
       console.warn('Session expired or invalid:', e.message);
       clearAuthSession();
@@ -141,6 +152,7 @@
     const guestSection = document.getElementById('auth-guest-section');
     const userSection = document.getElementById('auth-user-section');
     const adminNavBtn = document.getElementById('nav-btn-admin');
+    const adminNavItem = document.getElementById('nav-item-admin');
 
     if (state.user) {
       if (guestSection) guestSection.style.display = 'none';
@@ -157,10 +169,14 @@
       if (adminNavBtn) {
         adminNavBtn.style.display = state.user.role === 'admin' ? 'inline-flex' : 'none';
       }
+      if (adminNavItem) {
+        adminNavItem.style.display = state.user.role === 'admin' ? 'inline-block' : 'none';
+      }
     } else {
       if (guestSection) guestSection.style.display = 'flex';
       if (userSection) userSection.style.display = 'none';
       if (adminNavBtn) adminNavBtn.style.display = 'none';
+      if (adminNavItem) adminNavItem.style.display = 'none';
     }
   }
 
@@ -186,8 +202,10 @@
           targetPane.classList.add('active');
         }
 
-        // Lazy-load data when navigating into Dashboard or Admin
-        if (targetId === 'tab-dashboard') {
+        // Lazy-load data when navigating into History, Dashboard or Admin
+        if (targetId === 'tab-history') {
+          loadDetectionHistory();
+        } else if (targetId === 'tab-dashboard') {
           loadUserDashboard();
         } else if (targetId === 'tab-admin') {
           loadAdminDashboard();
@@ -401,7 +419,8 @@
         });
 
         displayDetectionResult(result);
-        showToast('Detection analysis completed!', 'success');
+        showToast('Detection analysis completed & saved to database!', 'success');
+        loadDetectionHistory();
       } catch (err) {
         showToast(`Detection error: ${err.message}`, 'error');
       } finally {
@@ -452,7 +471,8 @@
         });
 
         displayBatchResults(data.results);
-        showToast(`Batch completed: ${data.total_processed} claims analyzed.`, 'success');
+        showToast(`Batch completed: ${data.total_processed} claims saved to database!`, 'success');
+        loadDetectionHistory();
       } catch (err) {
         showToast(`Batch error: ${err.message}`, 'error');
       } finally {
@@ -547,6 +567,274 @@
     });
 
     container.style.display = 'block';
+  }
+
+  // --------------------------------------------------------------------------
+  // Detection History & Database Records
+  // --------------------------------------------------------------------------
+  function setupHistory() {
+    const searchInput = document.getElementById('hist-search-input');
+    const verdictFilter = document.getElementById('hist-filter-verdict');
+    const refreshBtn = document.getElementById('btn-refresh-history');
+    const clearBtn = document.getElementById('btn-clear-history');
+    const gotoDetectBtn = document.getElementById('btn-goto-detect');
+    const gotoHistBtn = document.getElementById('btn-goto-history');
+
+    searchInput?.addEventListener('input', () => {
+      filterAndRenderHistory();
+    });
+
+    verdictFilter?.addEventListener('change', () => {
+      filterAndRenderHistory();
+    });
+
+    refreshBtn?.addEventListener('click', () => {
+      loadDetectionHistory(true);
+    });
+
+    clearBtn?.addEventListener('click', async () => {
+      if (!state.accessToken) {
+        showToast('Please sign in to manage your history.', 'warning');
+        return;
+      }
+      if (confirm('Are you sure you want to delete all your saved detection records from the database?')) {
+        try {
+          const res = await apiRequest('/history', { method: 'DELETE' });
+          showToast(res.message || 'Detection history cleared from database.', 'success');
+          state.historyDetections = [];
+          renderHistoryTable([]);
+          updateHistoryMetrics([]);
+        } catch (e) {
+          showToast(`Failed to clear history: ${e.message}`, 'error');
+        }
+      }
+    });
+
+    gotoDetectBtn?.addEventListener('click', () => {
+      switchToTab('tab-detect');
+    });
+
+    gotoHistBtn?.addEventListener('click', () => {
+      switchToTab('tab-history');
+    });
+
+    // Login activity modal trigger
+    document.getElementById('btn-open-logins')?.addEventListener('click', () => {
+      openLoginHistoryModal();
+    });
+  }
+
+  function switchToTab(tabId) {
+    const targetBtn = document.querySelector(`.nav-tab-btn[data-tab="${tabId}"]`);
+    if (targetBtn) {
+      targetBtn.click();
+    }
+  }
+
+  async function loadDetectionHistory(isManualRefresh = false) {
+    if (!state.accessToken) {
+      state.historyDetections = [];
+      renderHistoryTable([]);
+      updateHistoryMetrics([]);
+      return;
+    }
+
+    try {
+      const records = await apiRequest('/history?limit=100');
+      state.historyDetections = Array.isArray(records) ? records : [];
+      filterAndRenderHistory();
+      updateHistoryMetrics(state.historyDetections);
+      if (isManualRefresh) {
+        showToast('Detection history refreshed from database.', 'info');
+      }
+    } catch (e) {
+      console.warn('Failed to load detection history:', e);
+    }
+  }
+
+  function filterAndRenderHistory() {
+    const searchVal = (document.getElementById('hist-search-input')?.value || '').toLowerCase().trim();
+    const verdictVal = (document.getElementById('hist-filter-verdict')?.value || '').toUpperCase().trim();
+
+    let list = state.historyDetections || [];
+    if (verdictVal) {
+      list = list.filter((item) => (item.verdict || '').toUpperCase() === verdictVal);
+    }
+    if (searchVal) {
+      list = list.filter((item) =>
+        (item.claim || '').toLowerCase().includes(searchVal) ||
+        (item.explanation || '').toLowerCase().includes(searchVal)
+      );
+    }
+    renderHistoryTable(list);
+  }
+
+  function updateHistoryMetrics(records) {
+    const total = records.length;
+    let real = 0;
+    let fake = 0;
+    let unc = 0;
+
+    records.forEach((r) => {
+      const v = (r.verdict || '').toUpperCase();
+      if (v.includes('REAL')) real++;
+      else if (v.includes('FAKE')) fake++;
+      else unc++;
+    });
+
+    const elTotal = document.getElementById('hist-stat-total');
+    const elReal = document.getElementById('hist-stat-real');
+    const elFake = document.getElementById('hist-stat-fake');
+    const elUnc = document.getElementById('hist-stat-uncertain');
+    const elBadge = document.getElementById('hist-records-count');
+
+    if (elTotal) elTotal.textContent = total;
+    if (elReal) elReal.textContent = real;
+    if (elFake) elFake.textContent = fake;
+    if (elUnc) elUnc.textContent = unc;
+    if (elBadge) elBadge.textContent = `${total} Records`;
+  }
+
+  function renderHistoryTable(records) {
+    const tbody = document.getElementById('hist-tbody');
+    const emptyState = document.getElementById('hist-empty-state');
+    const tableContainer = document.getElementById('hist-table-container');
+
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+    if (!records || records.length === 0) {
+      if (emptyState) emptyState.style.display = 'block';
+      if (tableContainer) tableContainer.style.display = 'none';
+      return;
+    }
+
+    if (emptyState) emptyState.style.display = 'none';
+    if (tableContainer) tableContainer.style.display = 'block';
+
+    records.forEach((rec) => {
+      const tr = document.createElement('tr');
+      const v = (rec.verdict || 'UNCERTAIN').toUpperCase();
+      let pillClass = 'stance-neutral';
+      if (v.includes('REAL')) pillClass = 'stance-supports';
+      if (v.includes('FAKE')) pillClass = 'stance-refutes';
+
+      const conf = rec.confidence != null ? Math.round(rec.confidence) : 0;
+      const dateStr = rec.created_at ? new Date(rec.created_at).toLocaleString() : '--';
+
+      tr.innerHTML = `
+        <td style="color:var(--text-dim); font-size:0.8rem;">#${rec.id}</td>
+        <td>
+          <div style="font-weight:600; color:var(--text-main); margin-bottom:0.2rem; max-width:420px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            ${escapeHtml(rec.claim)}
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-muted); max-width:420px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            ${escapeHtml(rec.explanation || '')}
+          </div>
+        </td>
+        <td><span class="stance-pill ${pillClass}">${v}</span></td>
+        <td>
+          <div style="display:flex; align-items:center; gap:0.4rem;">
+            <span style="font-size:0.85rem; font-weight:600;">${conf}%</span>
+          </div>
+        </td>
+        <td style="font-size:0.75rem; color:var(--text-muted);">${dateStr}</td>
+        <td style="text-align:right;">
+          <div style="display:flex; justify-content:flex-end; gap:0.4rem;">
+            <button class="btn btn-secondary btn-sm btn-hist-view" data-id="${rec.id}" title="View Details" style="padding:0.25rem 0.5rem; font-size:0.75rem;">
+              View
+            </button>
+            <button class="btn btn-secondary btn-sm btn-hist-del" data-id="${rec.id}" title="Delete" style="padding:0.25rem 0.5rem; font-size:0.75rem; color:#ef4444;">
+              &times;
+            </button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // Attach row events
+    tbody.querySelectorAll('.btn-hist-view').forEach((b) => {
+      b.addEventListener('click', () => {
+        const id = parseInt(b.getAttribute('data-id'), 10);
+        const item = (state.historyDetections || []).find((r) => r.id === id);
+        if (item) openDetectionDetailModal(item);
+      });
+    });
+
+    tbody.querySelectorAll('.btn-hist-del').forEach((b) => {
+      b.addEventListener('click', async () => {
+        const id = parseInt(b.getAttribute('data-id'), 10);
+        if (confirm(`Delete detection record #${id} from database?`)) {
+          try {
+            await apiRequest(`/history/${id}`, { method: 'DELETE' });
+            showToast(`Detection #${id} deleted from database.`, 'info');
+            state.historyDetections = (state.historyDetections || []).filter((r) => r.id !== id);
+            filterAndRenderHistory();
+            updateHistoryMetrics(state.historyDetections);
+          } catch (e) {
+            showToast(`Delete failed: ${e.message}`, 'error');
+          }
+        }
+      });
+    });
+  }
+
+  function openDetectionDetailModal(item) {
+    const modal = document.getElementById('modal-detection-detail');
+    if (!modal) return;
+
+    document.getElementById('modal-detail-claim').textContent = item.claim || '--';
+    const verdictEl = document.getElementById('modal-detail-verdict');
+    const v = (item.verdict || 'UNCERTAIN').toUpperCase();
+    let pillClass = 'stance-neutral';
+    if (v.includes('REAL')) pillClass = 'stance-supports';
+    if (v.includes('FAKE')) pillClass = 'stance-refutes';
+    verdictEl.innerHTML = `<span class="stance-pill ${pillClass}">${v}</span>`;
+
+    document.getElementById('modal-detail-confidence').textContent = `${Math.round(item.confidence || 0)}%`;
+    document.getElementById('modal-detail-date').textContent = item.created_at ? new Date(item.created_at).toLocaleString() : '--';
+    document.getElementById('modal-detail-explanation').textContent = item.explanation || 'No explanation recorded.';
+
+    modal.showModal();
+  }
+
+  async function openLoginHistoryModal() {
+    const modal = document.getElementById('modal-login-history');
+    if (!modal) return;
+    modal.showModal();
+
+    const tbody = document.getElementById('tbody-user-logins');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-dim);">Loading login records from database...</td></tr>';
+
+    try {
+      const records = await apiRequest('/auth/login-history');
+      if (!records || records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-dim);">No login records recorded yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '';
+      records.forEach((r) => {
+        const tr = document.createElement('tr');
+        const isSuccess = r.status === 'success';
+        tr.innerHTML = `
+          <td>
+            <span class="stance-pill ${isSuccess ? 'stance-supports' : 'stance-refutes'}">
+              ${isSuccess ? 'Success' : 'Failed'}
+            </span>
+          </td>
+          <td style="font-size:0.8rem; color:var(--text-muted);">${new Date(r.login_time).toLocaleString()}</td>
+          <td style="font-family:var(--font-mono); font-size:0.8rem;">${escapeHtml(r.ip_address || '127.0.0.1')}</td>
+          <td style="font-size:0.75rem; color:var(--text-dim); max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(r.user_agent || '')}">
+            ${escapeHtml(r.user_agent || '--')}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (e) {
+      tbody.innerHTML = `<tr><td colspan="4" style="color:var(--verdict-fake); text-align:center;">${escapeHtml(e.message)}</td></tr>`;
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -1029,6 +1317,7 @@
     setupTabs();
     setupModals();
     setupDetection();
+    setupHistory();
     setupFactChecking();
     setupNLP();
     setupDashboardReports();

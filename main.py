@@ -1,11 +1,13 @@
 from pathlib import Path
+from typing import Optional
 from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from database import Base, engine
+from database import Base, engine, init_db
 from models import Analysis, DetectionHistory, User
 from schemas import (
     AnalysisCreate,
@@ -33,13 +35,22 @@ class NewsRequest(BaseModel):
     claim: str
 
 
-# Initialize database tables
-Base.metadata.create_all(bind=engine)
+# Initialize database tables & apply SQLite schema enhancements
+init_db()
 
 app = FastAPI(
     title="AI Fake News Detector API",
     description="Backend API with user authentication, role-based access control, news detection, and fact checking.",
     version="1.0.0",
+)
+
+# Enable CORS for seamless frontend-backend communication
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Include Routers
@@ -190,15 +201,23 @@ def detect_news(
 
 @app.get("/history", tags=["Detection"])
 def get_history(
-    limit: int = 20,
+    limit: int = 50,
+    skip: int = 0,
+    verdict: Optional[str] = None,
+    q: Optional[str] = None,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """Return detection history for the authenticated user."""
+    """Return detection history for the authenticated user with optional filter & search."""
+    query = db.query(DetectionHistory).filter(DetectionHistory.user_id == current_user.id)
+    if verdict:
+        query = query.filter(DetectionHistory.verdict == verdict.upper())
+    if q:
+        query = query.filter(DetectionHistory.claim.ilike(f"%{q}%"))
+
     detections = (
-        db.query(DetectionHistory)
-        .filter(DetectionHistory.user_id == current_user.id)
-        .order_by(DetectionHistory.id.desc())
+        query.order_by(DetectionHistory.id.desc())
+        .offset(skip)
         .limit(limit)
         .all()
     )
@@ -214,6 +233,70 @@ def get_history(
         }
         for d in detections
     ]
+
+
+@app.get("/history/{detection_id}", tags=["Detection"])
+def get_history_item(
+    detection_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Return details of a specific detection record belonging to current user."""
+    detection = (
+        db.query(DetectionHistory)
+        .filter(DetectionHistory.id == detection_id, DetectionHistory.user_id == current_user.id)
+        .first()
+    )
+    if not detection:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Detection record not found",
+        )
+    return {
+        "id": detection.id,
+        "claim": detection.claim,
+        "verdict": detection.verdict,
+        "confidence": detection.confidence,
+        "explanation": detection.explanation,
+        "created_at": detection.created_at,
+    }
+
+
+@app.delete("/history/{detection_id}", tags=["Detection"])
+def delete_history_item(
+    detection_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Delete a single detection entry from current user's history."""
+    detection = (
+        db.query(DetectionHistory)
+        .filter(DetectionHistory.id == detection_id, DetectionHistory.user_id == current_user.id)
+        .first()
+    )
+    if not detection:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Detection record not found",
+        )
+    db.delete(detection)
+    db.commit()
+    return {"message": "Detection deleted successfully", "id": detection_id}
+
+
+@app.delete("/history", tags=["Detection"])
+def clear_user_history(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Clear all detection history records for current user."""
+    deleted_count = (
+        db.query(DetectionHistory)
+        .filter(DetectionHistory.user_id == current_user.id)
+        .delete()
+    )
+    db.commit()
+    return {"message": "History cleared successfully", "deleted_count": deleted_count}
 
 
 @app.post("/detect/batch", response_model=BatchDetectionResponse, tags=["Detection"])

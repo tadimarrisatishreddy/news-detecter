@@ -159,6 +159,10 @@
       }
     }
 
+    const API_BASE = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8000'))
+      ? 'http://127.0.0.1:8000'
+      : '';
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const full_name = document.getElementById('reg-name').value.trim();
@@ -175,7 +179,7 @@
         submitBtn.disabled = true;
         submitBtn.textContent = 'Creating account...';
 
-        const res = await fetch('/auth/register', {
+        const res = await fetch(`${API_BASE}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

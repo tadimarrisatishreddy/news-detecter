@@ -263,7 +263,10 @@ python run.py
 # Optionally automatically open the web browser
 python run.py --open
 ```
-- **Web Application**: [http://localhost:8000](http://localhost:8000)
+- **Main AI Studio**: [http://localhost:8000](http://localhost:8000)
+- **Sign In Page**: [http://localhost:8000/login](http://localhost:8000/login)
+- **Register Page**: [http://localhost:8000/register](http://localhost:8000/register)
+- **Dashboard & Reports Page**: [http://localhost:8000/dashboard-page](http://localhost:8000/dashboard-page)
 - **Interactive Swagger Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 - **Health Check Probe**: [http://localhost:8000/health](http://localhost:8000/health)
 
@@ -280,13 +283,13 @@ curl http://localhost:8000/health
 
 ## 🧪 Running Automated Tests
 
-The comprehensive automated test suite features **146 passing tests** across all 6 modules:
+The comprehensive automated test suite features **149 passing tests** across all 6 modules:
 
 ```bash
-# Run the entire test suite (146 tests)
+# Run the entire test suite (149 tests)
 python -m pytest -v
 
-# Run Frontend & Deployment tests (8 tests)
+# Run Frontend & Deployment tests (11 tests)
 python -m pytest tests/test_frontend.py -v
 
 # Run Dashboard & Reports tests (19 tests)

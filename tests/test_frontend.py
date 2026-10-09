@@ -61,6 +61,30 @@ class TestFrontendEndpoints:
         assert len(data["modules"]) == 6
         assert any("Frontend" in m for m in data["modules"])
 
+    def test_login_page_serves_html(self, client):
+        """GET /login should serve dedicated Login page."""
+        resp = client.get("/login")
+        assert resp.status_code == 200
+        assert "text/html" in resp.headers.get("content-type", "")
+        assert "Sign In" in resp.text
+        assert "login-email" in resp.text
+
+    def test_register_page_serves_html(self, client):
+        """GET /register should serve dedicated Register page."""
+        resp = client.get("/register")
+        assert resp.status_code == 200
+        assert "text/html" in resp.headers.get("content-type", "")
+        assert "Create TruthLens Account" in resp.text
+        assert "reg-email" in resp.text
+
+    def test_dashboard_page_serves_html(self, client):
+        """GET /dashboard-page should serve dedicated Dashboard & Reports page."""
+        resp = client.get("/dashboard-page")
+        assert resp.status_code == 200
+        assert "text/html" in resp.headers.get("content-type", "")
+        assert "Dashboard & Reports" in resp.text
+        assert "dash-recent-feed" in resp.text
+
 
 class TestStaticAssets:
     def test_static_style_css(self, client):

@@ -306,20 +306,25 @@
   <div id="toast-container"></div>
 
   <script>
+    const API_BASE = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8000'))
+      ? 'http://127.0.0.1:8000'
+      : '';
+
     let currentUser = null;
     let accessToken = localStorage.getItem('access_token');
     let refreshToken = localStorage.getItem('refresh_token');
 
     async function api(endpoint, options = {}) {
+      const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
       const headers = options.headers || {};
       headers['Content-Type'] = 'application/json';
       if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
       options.headers = headers;
 
-      let res = await fetch(endpoint, options);
+      let res = await fetch(url, options);
       if (res.status === 401 && refreshToken) {
         // Attempt refresh
-        const rRes = await fetch('/auth/refresh', {
+        const rRes = await fetch(`${API_BASE}/auth/refresh`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refresh_token: refreshToken }),
@@ -330,7 +335,7 @@
           localStorage.setItem('access_token', accessToken);
           headers['Authorization'] = `Bearer ${accessToken}`;
           options.headers = headers;
-          res = await fetch(endpoint, options);
+          res = await fetch(url, options);
         }
       }
 

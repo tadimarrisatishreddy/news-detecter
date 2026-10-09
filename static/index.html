@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TruthLens AI - Fake News Detector & Fact-Checking Studio</title>
   <meta name="description" content="AI-Powered Fake News Detection, NLP Linguistic Analysis, and Government Fact-Checking Studio.">
-  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
@@ -17,7 +17,7 @@
     <div class="header-container">
       <a href="#" class="brand">
         <div class="brand-icon">
-          <img src="/static/favicon.svg" alt="TruthLens Logo" width="36" height="36">
+          <img src="./favicon.svg" alt="TruthLens Logo" width="36" height="36">
         </div>
         <div class="brand-text">
           <h1>TruthLens AI</h1>
@@ -34,6 +34,12 @@
             </button>
           </li>
           <li>
+            <button class="nav-tab-btn" data-tab="tab-history" id="nav-btn-history">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Detection History
+            </button>
+          </li>
+          <li>
             <button class="nav-tab-btn" data-tab="tab-factcheck">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
               Fact Checking
@@ -46,10 +52,16 @@
             </button>
           </li>
           <li>
-            <a href="/dashboard-page" class="nav-tab-btn" style="text-decoration: none;">
+            <button class="nav-tab-btn" data-tab="tab-dashboard" id="nav-btn-dashboard">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
               Dashboard & Reports
-            </a>
+            </button>
+          </li>
+          <li id="nav-item-admin" style="display: none;">
+            <button class="nav-tab-btn" data-tab="tab-admin" id="nav-btn-admin">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/></svg>
+              Admin
+            </button>
           </li>
         </ul>
       </nav>
@@ -66,7 +78,10 @@
             <span class="user-name" id="header-user-name">User</span>
             <span class="user-role-tag" id="header-user-role">USER</span>
           </div>
-          <a href="/dashboard-page" class="btn btn-secondary btn-sm" title="Go to Dashboard">
+          <button class="btn btn-secondary btn-sm" id="btn-open-logins" title="View Login History">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+          </button>
+          <a href="/dashboard-page" class="btn btn-secondary btn-sm" title="Go to Dashboard Page">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
           </a>
           <button class="btn btn-secondary btn-sm" id="btn-logout" title="Sign Out">
@@ -196,6 +211,13 @@
               <span>Detection ID: <strong id="detect-meta-id">#--</strong></span>
               <span id="detect-meta-time">--</span>
             </div>
+
+            <div style="margin-top: 0.75rem;">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-goto-history" style="width: 100%;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                View Stored Detection in History
+              </button>
+            </div>
           </div>
 
           <!-- Batch Results Table -->
@@ -214,6 +236,101 @@
               </table>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------------
+         TAB: Detection History & Database Records
+         -------------------------------------------------------------------- -->
+    <section id="tab-history" class="tab-pane">
+      <div class="hero-banner">
+        <div class="hero-text">
+          <h2>News Detection History</h2>
+          <p>Complete audit record of your past news detections, veracity verdicts, and AI explanations stored securely in your database.</p>
+        </div>
+        <div class="hero-stats">
+          <button class="btn btn-secondary btn-sm" id="btn-refresh-history">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            Refresh History
+          </button>
+          <button class="btn btn-secondary btn-sm" id="btn-clear-history" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.4);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Clear All
+          </button>
+        </div>
+      </div>
+
+      <!-- History Summary Metrics -->
+      <div class="metrics-row" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 1.5rem;">
+        <div class="metric-box">
+          <div class="metric-number" id="hist-stat-total">0</div>
+          <div class="metric-label">Total Detections</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-number" id="hist-stat-real" style="color: var(--verdict-real);">0</div>
+          <div class="metric-label">Likely Real</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-number" id="hist-stat-fake" style="color: var(--verdict-fake);">0</div>
+          <div class="metric-label">Likely Fake</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-number" id="hist-stat-uncertain" style="color: var(--verdict-uncertain);">0</div>
+          <div class="metric-label">Uncertain</div>
+        </div>
+      </div>
+
+      <!-- Filter Toolbar -->
+      <div class="card" style="margin-bottom: 1.25rem; padding: 0.9rem 1.25rem;">
+        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 220px;">
+            <input type="text" id="hist-search-input" placeholder="Search claims by keyword..." style="width: 100%; padding: 0.6rem 0.9rem; background: var(--bg-input); border: 1px solid var(--border-light); border-radius: var(--radius-sm); color: var(--text-main); font-size: 0.85rem;">
+          </div>
+          <div style="min-width: 160px;">
+            <select id="hist-filter-verdict" style="width: 100%; padding: 0.6rem 0.9rem; background: var(--bg-input); border: 1px solid var(--border-light); border-radius: var(--radius-sm); color: var(--text-main); font-size: 0.85rem;">
+              <option value="">All Verdicts</option>
+              <option value="LIKELY_REAL">Likely Real</option>
+              <option value="LIKELY_FAKE">Likely Fake</option>
+              <option value="UNCERTAIN">Uncertain</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- History Table Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Stored Detection Records
+          </h3>
+          <span class="brand-badge" id="hist-records-count">0 Records</span>
+        </div>
+
+        <div id="hist-empty-state" class="empty-state" style="display: none; padding: 3rem 1rem; text-align: center;">
+          <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">📋</div>
+          <h4 style="font-size: 1.05rem; color: var(--text-main); margin-bottom: 0.4rem;">No Detection Records Found</h4>
+          <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 420px; margin: 0 auto 1.25rem auto;">
+            Run a news verification in the AI Detection tab to store your first claim analysis in the database.
+          </p>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-goto-detect">Run New Detection</button>
+        </div>
+
+        <div class="table-responsive" id="hist-table-container">
+          <table class="data-table" id="hist-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">#</th>
+                <th>Claim / Statement</th>
+                <th style="width: 130px;">Verdict</th>
+                <th style="width: 110px;">Confidence</th>
+                <th style="width: 160px;">Date & Time</th>
+                <th style="width: 120px; text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="hist-tbody"></tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -708,6 +825,75 @@
       </div>
       <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" id="btn-submit-register">Create Account</button>
     </form>
+  </dialog>
+
+  <!-- Detection Detail Modal -->
+  <dialog id="modal-detection-detail" style="max-width: 620px; width: 92%;">
+    <div class="dialog-header">
+      <h3 class="dialog-title">Detection Record Details</h3>
+      <button class="dialog-close" data-close="modal-detection-detail">&times;</button>
+    </div>
+    <div style="padding: 1rem 0;">
+      <div style="margin-bottom: 1rem;">
+        <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">Verified Claim:</span>
+        <p id="modal-detail-claim" style="font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-top: 0.25rem; line-height: 1.5;"></p>
+      </div>
+
+      <div style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding: 0.85rem 1rem; background: var(--bg-surface); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); flex-wrap: wrap;">
+        <div>
+          <span style="font-size: 0.75rem; color: var(--text-dim); display: block;">Verdict</span>
+          <div id="modal-detail-verdict" style="margin-top: 0.25rem;"></div>
+        </div>
+        <div>
+          <span style="font-size: 0.75rem; color: var(--text-dim); display: block;">AI Confidence</span>
+          <div id="modal-detail-confidence" style="font-size: 1.05rem; font-weight: 700; color: #38bdf8; margin-top: 0.2rem;">0%</div>
+        </div>
+        <div>
+          <span style="font-size: 0.75rem; color: var(--text-dim); display: block;">Database Timestamp</span>
+          <div id="modal-detail-date" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">--</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1rem;">
+        <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">AI Explanation & Reasoning:</span>
+        <p id="modal-detail-explanation" class="explanation-text" style="margin-top: 0.4rem; font-size: 0.875rem; white-space: pre-wrap; line-height: 1.6;"></p>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; padding-top: 0.75rem; border-top: 1px solid var(--border-subtle);">
+        <button type="button" class="btn btn-secondary btn-sm" data-close="modal-detection-detail">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- User Login Activity Modal -->
+  <dialog id="modal-login-history" style="max-width: 650px; width: 92%;">
+    <div class="dialog-header">
+      <h3 class="dialog-title">User Login Activity History</h3>
+      <button class="dialog-close" data-close="modal-login-history">&times;</button>
+    </div>
+    <div style="padding: 1rem 0;">
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Recorded user logins stored securely in your database for audit and security:
+      </p>
+      <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+        <table class="data-table" id="table-user-logins">
+          <thead>
+            <tr>
+              <th style="width: 90px;">Status</th>
+              <th style="width: 170px;">Date & Time</th>
+              <th>IP Address</th>
+              <th>User Agent</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-user-logins">
+            <tr><td colspan="4" style="text-align:center; color:var(--text-dim);">Loading login history...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="display: flex; justify-content: flex-end; margin-top: 1.25rem;">
+        <button type="button" class="btn btn-secondary btn-sm" data-close="modal-login-history">Close</button>
+      </div>
+    </div>
   </dialog>
 
   <!-- Toast Notification Stack -->
