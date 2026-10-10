@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard & Reports - TruthLens AI</title>
+  <title>Dashboard & Reports - NewsDetector</title>
   <meta name="description" content="Personal and administrative truth analytics, detection history, and exportable reports.">
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
   <link rel="stylesheet" href="/static/style.css">
@@ -30,62 +30,71 @@
 </head>
 <body>
 
-  <!-- ======================================================================
-       App Header & Multi-Page Navigation
-       ====================================================================== -->
-  <header class="app-header">
-    <div class="header-container">
-      <a href="/" class="brand">
-        <div class="brand-icon">
-          <img src="/static/favicon.svg" alt="TruthLens Logo" width="36" height="36">
-        </div>
-        <div class="brand-text">
-          <h1>TruthLens AI</h1>
-        </div>
-        <span class="brand-badge">Dashboard & Reports</span>
-      </a>
+  <div class="app-shell">
 
-      <nav aria-label="Main Navigation">
-        <ul class="nav-tabs">
-          <li>
-            <a href="/" class="nav-tab-btn" style="text-decoration: none;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-              Main Studio
-            </a>
-          </li>
-          <li>
-            <a href="/dashboard-page" class="nav-tab-btn active" style="text-decoration: none;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-              Dashboard & Reports
-            </a>
-          </li>
-        </ul>
-      </nav>
-
-      <div class="user-controls">
-        <div id="auth-guest-section" class="btn-group" style="display: none;">
-          <a href="/login?redirect=/dashboard-page" class="btn btn-secondary btn-sm">Sign In</a>
-          <a href="/register" class="btn btn-primary btn-sm">Register</a>
-        </div>
-
-        <div id="auth-user-section" class="user-status-card">
-          <div class="user-avatar" id="header-user-avatar">U</div>
-          <div class="user-info-text">
-            <span class="user-name" id="header-user-name">User</span>
-            <span class="user-role-tag" id="header-user-role">USER</span>
+    <!-- Sidebar Menu Bar -->
+    <aside class="sidebar-nav no-print">
+      <div class="sidebar-header">
+        <a href="/" class="sidebar-brand">
+          <div class="sidebar-brand-icon">
+            <img src="/static/favicon.svg" alt="NewsDetector Logo" width="30" height="30">
           </div>
-          <button class="btn btn-secondary btn-sm" id="btn-logout" title="Sign Out">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-          </button>
+          <div class="sidebar-brand-text">
+            <h1>NewsDetector</h1>
+            <span>Gemma 3 • v1.0</span>
+          </div>
+        </a>
+
+        <div>
+          <div class="sidebar-group-title">AI Project Modules</div>
+          <ul class="sidebar-menu" aria-label="Main Navigation">
+            <li>
+              <a href="/" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                <span>News Analyzer</span>
+              </a>
+            </li>
+            <li>
+              <a href="/dashboard-page" class="sidebar-link active">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                <span>Dashboard & Reports</span>
+              </a>
+            </li>
+            <li>
+              <a href="/history-page" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Detection History</span>
+              </a>
+            </li>
+            <li>
+              <a href="/nlp-page" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+                <span>NLP Studio</span>
+              </a>
+            </li>
+          </ul>
         </div>
       </div>
-    </div>
-  </header>
 
-  <!-- ======================================================================
-       Dashboard Content
-       ====================================================================== -->
-  <main class="app-main">
+      <div class="sidebar-footer">
+        <div class="sidebar-user-card" id="auth-user-section">
+          <div class="sidebar-user-avatar" id="header-user-avatar">U</div>
+          <div class="sidebar-user-details">
+            <span class="sidebar-user-name" id="header-user-name">User</span>
+            <span class="sidebar-user-role" id="header-user-role">USER</span>
+          </div>
+        </div>
+
+        <button type="button" class="btn-sidebar-logout" id="btn-logout" title="Sign Out">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <div id="auth-guest-section" style="display: none;"></div>
+
+    <main class="main-viewport app-main">
 
     <!-- Hero Banner with Export Actions -->
     <div class="hero-banner">
@@ -302,6 +311,7 @@
     </div>
 
   </main>
+  </div>
 
   <div id="toast-container"></div>
 
@@ -497,7 +507,7 @@
     document.getElementById('btn-export-report')?.addEventListener('click', async () => {
       try {
         const report = await api('/dashboard/me/report');
-        downloadJson(report, `truthlens-user-report-${Date.now()}.json`);
+        downloadJson(report, `newsdetector-user-report-${Date.now()}.json`);
         showToast('Personal report exported!', 'success');
       } catch (e) {
         showToast(`Export error: ${e.message}`, 'error');
@@ -507,7 +517,7 @@
     document.getElementById('btn-export-admin-report')?.addEventListener('click', async () => {
       try {
         const report = await api('/dashboard/admin/report');
-        downloadJson(report, `truthlens-system-report-${Date.now()}.json`);
+        downloadJson(report, `newsdetector-system-report-${Date.now()}.json`);
         showToast('System report exported!', 'success');
       } catch (e) {
         showToast(`Export error: ${e.message}`, 'error');
@@ -516,7 +526,7 @@
 
     // Logout
     document.getElementById('btn-logout')?.addEventListener('click', async () => {
-      if (confirm('Sign out from TruthLens AI?')) {
+      if (confirm('Sign out from NewsDetector?')) {
         try {
           if (refreshToken) {
             await api('/auth/logout', {

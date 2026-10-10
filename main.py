@@ -76,7 +76,7 @@ def health_check():
     """System health check endpoint for monitoring & deployment."""
     return {
         "status": "healthy",
-        "service": "TruthLens AI Fake News Detector",
+        "service": "NewsDetector Fake News Detector",
         "version": "1.0.0",
         "modules": [
             "1. Authentication & RBAC",
@@ -103,7 +103,7 @@ def api_info():
 def home(request: Request):
     """
     Root endpoint:
-    - Serves the TruthLens Main Studio page (Module 6) when accessed via browser.
+    - Serves the NewsDetector Main Studio page (Module 6) when accessed via browser.
     - Returns JSON API metadata when requested with Accept: application/json.
     """
     accept = request.headers.get("accept", "")
@@ -151,6 +151,26 @@ def dashboard_page():
     if dash_path.exists():
         return HTMLResponse(content=dash_path.read_text(encoding="utf-8"))
     raise HTTPException(status_code=404, detail="Dashboard page not found")
+
+
+@app.get("/history-page", tags=["Web Pages"], response_class=HTMLResponse)
+@app.get("/history.html", tags=["Web Pages"], response_class=HTMLResponse)
+def history_page():
+    """Serves the dedicated Detection History page."""
+    hist_path = STATIC_DIR / "history.html"
+    if hist_path.exists():
+        return HTMLResponse(content=hist_path.read_text(encoding="utf-8"))
+    raise HTTPException(status_code=404, detail="History page not found")
+
+
+@app.get("/nlp-page", tags=["Web Pages"], response_class=HTMLResponse)
+@app.get("/nlp.html", tags=["Web Pages"], response_class=HTMLResponse)
+def nlp_page():
+    """Serves the dedicated NLP Linguistic Studio page."""
+    nlp_path = STATIC_DIR / "nlp.html"
+    if nlp_path.exists():
+        return HTMLResponse(content=nlp_path.read_text(encoding="utf-8"))
+    raise HTTPException(status_code=404, detail="NLP page not found")
 
 
 @app.get("/profile", tags=["User Authentication"], deprecated=True)

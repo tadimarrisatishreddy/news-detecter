@@ -30,7 +30,7 @@ class TestFrontendEndpoints:
         resp = client.get("/", headers={"Accept": "text/html,application/xhtml+xml"})
         assert resp.status_code == 200
         assert "text/html" in resp.headers.get("content-type", "")
-        assert "TruthLens AI" in resp.text
+        assert "NewsDetector" in resp.text
         assert "nav-tabs" in resp.text
         assert "form-detect" in resp.text
 
@@ -57,7 +57,7 @@ class TestFrontendEndpoints:
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "healthy"
-        assert "TruthLens AI" in data["service"]
+        assert "NewsDetector" in data["service"]
         assert len(data["modules"]) == 6
         assert any("Frontend" in m for m in data["modules"])
 
@@ -74,7 +74,7 @@ class TestFrontendEndpoints:
         resp = client.get("/register")
         assert resp.status_code == 200
         assert "text/html" in resp.headers.get("content-type", "")
-        assert "Create TruthLens Account" in resp.text
+        assert "Create NewsDetector Account" in resp.text
         assert "reg-email" in resp.text
 
     def test_dashboard_page_serves_html(self, client):
@@ -84,6 +84,22 @@ class TestFrontendEndpoints:
         assert "text/html" in resp.headers.get("content-type", "")
         assert "Dashboard & Reports" in resp.text
         assert "dash-recent-feed" in resp.text
+
+    def test_history_page_serves_html(self, client):
+        """GET /history-page should serve dedicated History page."""
+        resp = client.get("/history-page")
+        assert resp.status_code == 200
+        assert "text/html" in resp.headers.get("content-type", "")
+        assert "Detection History" in resp.text
+        assert "hist-table" in resp.text
+
+    def test_nlp_page_serves_html(self, client):
+        """GET /nlp-page should serve dedicated NLP Studio page."""
+        resp = client.get("/nlp-page")
+        assert resp.status_code == 200
+        assert "text/html" in resp.headers.get("content-type", "")
+        assert "NLP Studio" in resp.text
+        assert "form-nlp" in resp.text
 
 
 class TestStaticAssets:
@@ -99,7 +115,7 @@ class TestStaticAssets:
         resp = client.get("/static/app.js")
         assert resp.status_code == 200
         assert "javascript" in resp.headers.get("content-type", "")
-        assert "TruthLens AI" in resp.text
+        assert "NewsDetector" in resp.text
         assert "apiRequest" in resp.text
 
     def test_static_favicon_svg(self, client):
@@ -115,5 +131,5 @@ class TestDeploymentPrerequisites:
         """System launcher prerequisite check executes without error."""
         check_prerequisites()
         captured = capsys.readouterr()
-        assert "TRUTHLENS AI" in captured.out
+        assert "NEWSDETECTOR" in captured.out
         assert "SQLite Tables: OK" in captured.out

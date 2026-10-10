@@ -1,5 +1,5 @@
 /**
- * TruthLens AI - Frontend Application
+ * NewsDetector - Frontend Application
  * Module 6: Frontend & System Integration
  */
 
@@ -79,7 +79,13 @@
       let errDetail = 'Request failed';
       try {
         const errorData = await response.json();
-        errDetail = errorData.detail || errorData.message || JSON.stringify(errorData);
+        if (typeof errorData.detail === 'string') {
+          errDetail = errorData.detail;
+        } else if (Array.isArray(errorData.detail) && errorData.detail.length > 0) {
+          errDetail = errorData.detail.map(d => d.msg || JSON.stringify(d)).join(', ');
+        } else {
+          errDetail = errorData.detail || errorData.message || JSON.stringify(errorData);
+        }
       } catch (e) {
         errDetail = `${response.status} ${response.statusText}`;
       }
@@ -135,6 +141,9 @@
   async function fetchUserProfile() {
     if (!state.accessToken) {
       updateAuthUI();
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = '/login';
+      }
       return;
     }
     try {
@@ -145,6 +154,9 @@
     } catch (e) {
       console.warn('Session expired or invalid:', e.message);
       clearAuthSession();
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = '/login';
+      }
     }
   }
 
@@ -333,6 +345,7 @@
             full_name,
             email,
             password,
+            confirm_password: password_confirm,
             password_confirm,
           }),
         });
@@ -363,8 +376,42 @@
         }
         clearAuthSession();
         showToast('Signed out successfully', 'info');
+        window.location.href = '/login';
       }
     });
+  }
+
+  // Helper to run fact check automatically in sequential pipeline
+  async function runFactCheckForClaim(claim) {
+    const fcBtn = document.getElementById('btn-run-factcheck');
+    const sourcesSlider = document.getElementById('fc-max-sources');
+    const govOnlyCheck = document.getElementById('fc-gov-only');
+    if (!claim) return;
+    try {
+      if (fcBtn) {
+        fcBtn.disabled = true;
+        fcBtn.innerHTML = 'Verifying sources...';
+      }
+      const result = await apiRequest('/fact-check/verify', {
+        method: 'POST',
+        body: JSON.stringify({
+          claim,
+          max_sources: sourcesSlider ? parseInt(sourcesSlider.value, 10) : 5,
+          check_government_only: govOnlyCheck ? govOnlyCheck.checked : false,
+        }),
+      });
+      displayFactCheckResult(result);
+    } catch (e) {
+      console.warn('Fact check auto-run error:', e);
+    } finally {
+      if (fcBtn) {
+        fcBtn.disabled = false;
+        fcBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+          Run Multi-Source Fact Check
+        `;
+      }
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -374,6 +421,40 @@
     const form = document.getElementById('form-detect');
     const claimInput = document.getElementById('detect-claim-input');
     const runBtn = document.getElementById('btn-run-detect');
+
+    // Quick Preprocessing Button
+    document.getElementById('btn-quick-preprocess')?.addEventListener('click', async () => {
+      const claim = claimInput.value.trim();
+      if (!claim) {
+        showToast('Please enter text to preprocess.', 'warning');
+        return;
+      }
+      try {
+        const data = await apiRequest('/preprocess', {
+          method: 'POST',
+          body: JSON.stringify({
+            text: claim,
+            lowercase: true,
+            strip_html: document.getElementById('nlp-opt-html')?.checked ?? true,
+            expand_contractions: document.getElementById('nlp-opt-contractions')?.checked ?? true,
+            remove_urls: document.getElementById('nlp-opt-urls')?.checked ?? true,
+            remove_stopwords: document.getElementById('nlp-opt-stopwords')?.checked ?? false,
+            preserve_sentence_punct: true,
+          }),
+        });
+        const previewBox = document.getElementById('preprocess-preview-box');
+        const previewText = document.getElementById('preprocess-preview-text');
+        const tokenBadge = document.getElementById('preprocess-token-badge');
+        if (previewBox && previewText && tokenBadge) {
+          previewBox.style.display = 'block';
+          previewText.textContent = data.cleaned_text;
+          tokenBadge.textContent = `${data.word_count} words • ${data.tokens.length} tokens`;
+        }
+        showToast('Text preprocessed successfully!', 'success');
+      } catch (e) {
+        showToast(`Preprocessing error: ${e.message}`, 'error');
+      }
+    });
 
     // Sample Chips
     document.querySelectorAll('.sample-chip[data-sample]').forEach((chip) => {
@@ -405,13 +486,13 @@
 
       if (!state.accessToken) {
         showToast('Please sign in or create an account to run AI Detection.', 'warning');
-        document.getElementById('modal-login')?.showModal();
+        window.location.href = '/login';
         return;
       }
 
       try {
         runBtn.disabled = true;
-        runBtn.innerHTML = 'Analyzing with Gemma...';
+        runBtn.innerHTML = 'Analyzing with Gemma 3...';
 
         const result = await apiRequest('/detect', {
           method: 'POST',
@@ -419,15 +500,22 @@
         });
 
         displayDetectionResult(result);
-        showToast('Detection analysis completed & saved to database!', 'success');
+        showToast('Gemma 3 detection completed & stored!', 'success');
         loadDetectionHistory();
+
+        // Sequential Pipeline Step 3: Populate & trigger Fact-Checking verification
+        const fcInput = document.getElementById('fc-claim-input');
+        if (fcInput) {
+          fcInput.value = claim;
+          runFactCheckForClaim(claim);
+        }
       } catch (err) {
         showToast(`Detection error: ${err.message}`, 'error');
       } finally {
         runBtn.disabled = false;
         runBtn.innerHTML = `
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          Verify Claim Veracity
+          Process Text & Verify News
         `;
       }
     });
@@ -1207,7 +1295,7 @@
       }
       try {
         const report = await apiRequest('/dashboard/me/report');
-        downloadJsonFile(report, `truthlens-user-report-${Date.now()}.json`);
+        downloadJsonFile(report, `newsdetector-user-report-${Date.now()}.json`);
         showToast('Personal report exported!', 'success');
       } catch (e) {
         showToast(`Report export error: ${e.message}`, 'error');
@@ -1217,7 +1305,7 @@
     document.getElementById('btn-export-admin-report')?.addEventListener('click', async () => {
       try {
         const report = await apiRequest('/dashboard/admin/report');
-        downloadJsonFile(report, `truthlens-system-report-${Date.now()}.json`);
+        downloadJsonFile(report, `newsdetector-system-report-${Date.now()}.json`);
         showToast('System report exported!', 'success');
       } catch (e) {
         showToast(`Admin report export error: ${e.message}`, 'error');

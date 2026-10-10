@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign In - TruthLens AI</title>
-  <meta name="description" content="Sign in to your TruthLens AI Fake News Detector account.">
+  <title>Sign In & Register - NewsDetector</title>
+  <meta name="description" content="Sign in or create an account for NewsDetector Fake News Detector.">
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
   <link rel="stylesheet" href="/static/style.css">
   <style>
@@ -15,11 +15,11 @@
       align-items: center;
       justify-content: center;
       padding: 1.5rem;
-      background: radial-gradient(circle at top, rgba(79, 70, 229, 0.15) 0%, transparent 60%), var(--bg-app);
+      background: radial-gradient(circle at top, rgba(79, 70, 229, 0.18) 0%, transparent 65%), var(--bg-app);
     }
     .auth-card {
       width: 100%;
-      max-width: 440px;
+      max-width: 460px;
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
@@ -32,13 +32,13 @@
       flex-direction: column;
       align-items: center;
       gap: 0.5rem;
-      margin-bottom: 2rem;
+      margin-bottom: 1.75rem;
       text-align: center;
     }
     .auth-brand h1 {
-      font-size: 1.4rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, #818cf8 0%, #38bdf8 100%);
+      font-size: 1.45rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #a5b4fc 0%, #38bdf8 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -46,9 +46,16 @@
       color: var(--text-muted);
       font-size: 0.875rem;
     }
+    .form-pane {
+      display: none;
+    }
+    .form-pane.active {
+      display: block;
+      animation: fadeIn 0.25s ease-out;
+    }
     .auth-footer {
       text-align: center;
-      margin-top: 1.75rem;
+      margin-top: 1.5rem;
       font-size: 0.85rem;
       color: var(--text-muted);
     }
@@ -60,17 +67,13 @@
     .auth-footer a:hover {
       text-decoration: underline;
     }
-    .back-home-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      margin-top: 1.25rem;
-      color: var(--text-dim);
-      font-size: 0.8rem;
-      text-decoration: none;
+    .brand-logo-glow {
+      box-shadow: 0 0 25px rgba(99, 102, 241, 0.4);
+      border-radius: var(--radius-md);
+      transition: transform var(--transition-fast);
     }
-    .back-home-link:hover {
-      color: var(--text-main);
+    .brand-logo-glow:hover {
+      transform: scale(1.05);
     }
   </style>
 </head>
@@ -79,39 +82,84 @@
     <div class="auth-card">
       <div class="auth-brand">
         <a href="/" style="text-decoration: none;">
-          <img src="/static/favicon.svg" alt="TruthLens Logo" width="48" height="48">
+          <img src="/static/favicon.svg" alt="NewsDetector Logo" width="48" height="48" class="brand-logo-glow">
         </a>
-        <h1>TruthLens AI</h1>
-        <p class="auth-subtitle">Sign in to access AI detection, fact-checking & reports</p>
+        <h1>NewsDetector</h1>
+        <p class="auth-subtitle">AI Fake News Detector & Fact-Checking Studio</p>
       </div>
 
-      <form id="page-login-form">
-        <div class="form-group">
-          <label for="login-email">Email Address</label>
-          <input type="email" id="login-email" autocomplete="email" required placeholder="user@example.com">
-        </div>
+      <!-- Segmented Tab Switcher -->
+      <div class="auth-tabs" role="tablist">
+        <button type="button" class="auth-tab-btn active" id="tab-btn-login" role="tab">Sign In</button>
+        <button type="button" class="auth-tab-btn" id="tab-btn-register" role="tab">Create Account</button>
+      </div>
 
-        <div class="form-group">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-            <label for="login-password" style="margin-bottom: 0;">Password</label>
+      <!-- Form Pane 1: Sign In -->
+      <div id="pane-login" class="form-pane active">
+        <form id="page-login-form">
+          <div class="form-group">
+            <label for="login-email">Email Address</label>
+            <input type="email" id="login-email" autocomplete="email" required placeholder="user@example.com">
           </div>
-          <input type="password" id="login-password" autocomplete="current-password" required placeholder="••••••••">
+
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" autocomplete="current-password" required placeholder="••••••••">
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.85rem;" id="btn-submit-login">
+            Sign In to NewsDetector
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          Don't have an account? <a href="javascript:void(0)" id="link-switch-register">Create an account</a>
         </div>
-
-        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.75rem;" id="btn-submit-login">
-          Sign In
-        </button>
-      </form>
-
-      <div class="auth-footer">
-        Don't have an account yet? <a href="/register">Create an account</a>
       </div>
-    </div>
 
-    <a href="/" class="back-home-link">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
-      Return to Main Studio
-    </a>
+      <!-- Form Pane 2: Create Account -->
+      <div id="pane-register" class="form-pane">
+        <h2 style="font-size: 1.15rem; margin-bottom: 0.5rem; text-align: center; color: var(--text-main);">Create NewsDetector Account</h2>
+        <form id="page-register-form">
+          <div class="form-group">
+            <label for="reg-name">Full Name</label>
+            <input type="text" id="reg-name" required placeholder="Dr. Jane Doe">
+          </div>
+
+          <div class="form-group">
+            <label for="reg-email">Email Address</label>
+            <input type="email" id="reg-email" required placeholder="jane@example.com">
+          </div>
+
+          <div class="form-group">
+            <label for="reg-password">Password</label>
+            <input type="password" id="reg-password" required placeholder="Choose a strong password">
+            
+            <div class="pwd-policy-box">
+              <div class="policy-item" id="p-len"><span>•</span> At least 8 characters</div>
+              <div class="policy-item" id="p-upper"><span>•</span> One uppercase letter (A-Z)</div>
+              <div class="policy-item" id="p-lower"><span>•</span> One lowercase letter (a-z)</div>
+              <div class="policy-item" id="p-num"><span>•</span> One number (0-9)</div>
+              <div class="policy-item" id="p-special"><span>•</span> One special character (!@#$%^&*)</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-confirm">Confirm Password</label>
+            <input type="password" id="reg-confirm" required placeholder="Re-type your password">
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.85rem;" id="btn-submit-register">
+            Complete Registration
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          Already registered? <a href="javascript:void(0)" id="link-switch-login">Sign in here</a>
+        </div>
+      </div>
+
+    </div>
   </div>
 
   <div id="toast-container"></div>
@@ -126,27 +174,80 @@
       setTimeout(() => toast.remove(), 4000);
     }
 
-    const form = document.getElementById('page-login-form');
-    const submitBtn = document.getElementById('btn-submit-login');
-
-    // Show registered notification if redirected from register page
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('registered') === '1') {
-      showToast('Registration successful! Please sign in with your credentials.', 'success');
-    }
-
     const API_BASE = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8000'))
       ? 'http://127.0.0.1:8000'
       : '';
 
-    form.addEventListener('submit', async (e) => {
+    const tabBtnLogin = document.getElementById('tab-btn-login');
+    const tabBtnRegister = document.getElementById('tab-btn-register');
+    const paneLogin = document.getElementById('pane-login');
+    const paneRegister = document.getElementById('pane-register');
+    const linkSwitchRegister = document.getElementById('link-switch-register');
+    const linkSwitchLogin = document.getElementById('link-switch-login');
+
+    function switchTab(mode) {
+      if (mode === 'register') {
+        tabBtnRegister.classList.add('active');
+        tabBtnLogin.classList.remove('active');
+        paneRegister.classList.add('active');
+        paneLogin.classList.remove('active');
+      } else {
+        tabBtnLogin.classList.add('active');
+        tabBtnRegister.classList.remove('active');
+        paneLogin.classList.add('active');
+        paneRegister.classList.remove('active');
+      }
+    }
+
+    tabBtnLogin.addEventListener('click', () => switchTab('login'));
+    tabBtnRegister.addEventListener('click', () => switchTab('register'));
+    linkSwitchRegister.addEventListener('click', () => switchTab('register'));
+    linkSwitchLogin.addEventListener('click', () => switchTab('login'));
+
+    // Check URL parameters (e.g. ?tab=register or ?registered=1)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('tab') === 'register' || window.location.pathname === '/register') {
+      switchTab('register');
+    }
+    if (urlParams.get('registered') === '1') {
+      showToast('Account created! Please sign in with your credentials.', 'success');
+      switchTab('login');
+    }
+
+    // Password validation feedback
+    const pwdInput = document.getElementById('reg-password');
+    pwdInput.addEventListener('input', () => {
+      const val = pwdInput.value;
+      setCheck('p-len', val.length >= 8);
+      setCheck('p-upper', /[A-Z]/.test(val));
+      setCheck('p-lower', /[a-z]/.test(val));
+      setCheck('p-num', /[0-9]/.test(val));
+      setCheck('p-special', /[!@#$%^&*(),.?":{}|<>\-_+=\[\]~/\\]/.test(val));
+    });
+
+    function setCheck(id, ok) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (ok) {
+        el.classList.add('valid');
+        el.querySelector('span').textContent = '✓';
+      } else {
+        el.classList.remove('valid');
+        el.querySelector('span').textContent = '•';
+      }
+    }
+
+    // Login Form Submit
+    const loginForm = document.getElementById('page-login-form');
+    const btnSubmitLogin = document.getElementById('btn-submit-login');
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('login-email').value.trim();
       const password = document.getElementById('login-password').value;
 
       try {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Verifying credentials...';
+        btnSubmitLogin.disabled = true;
+        btnSubmitLogin.textContent = 'Verifying credentials...';
 
         const res = await fetch(`${API_BASE}/auth/login`, {
           method: 'POST',
@@ -159,21 +260,93 @@
           throw new Error(data.detail || data.message || 'Login failed');
         }
 
-        // Store tokens in localStorage
+        // Store tokens
         localStorage.setItem('access_token', data.access_token);
         localStorage.setItem('refresh_token', data.refresh_token);
 
-        showToast('Signed in successfully! Redirecting...', 'success');
+        showToast('Signed in successfully! Opening NewsDetector workspace...', 'success');
         
-        // Redirect to destination or main studio
-        const redirect = urlParams.get('redirect') || '/';
+        // Automatically open the second page (Main page /)
         setTimeout(() => {
-          window.location.href = redirect;
-        }, 800);
+          window.location.href = '/';
+        }, 700);
       } catch (err) {
         showToast(err.message, 'error');
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Sign In';
+        btnSubmitLogin.disabled = false;
+        btnSubmitLogin.textContent = 'Sign In to NewsDetector';
+      }
+    });
+
+    // Register Form Submit
+    const registerForm = document.getElementById('page-register-form');
+    const btnSubmitRegister = document.getElementById('btn-submit-register');
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const full_name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = pwdInput.value;
+      const password_confirm = document.getElementById('reg-confirm').value;
+
+      if (password !== password_confirm) {
+        showToast('Password confirmation does not match.', 'error');
+        return;
+      }
+
+      try {
+        btnSubmitRegister.disabled = true;
+        btnSubmitRegister.textContent = 'Creating account...';
+
+        const res = await fetch(`${API_BASE}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            full_name,
+            email,
+            password,
+            confirm_password: password_confirm,
+            password_confirm,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          let errDetail = 'Registration failed';
+          if (typeof data.detail === 'string') {
+            errDetail = data.detail;
+          } else if (Array.isArray(data.detail) && data.detail.length > 0) {
+            errDetail = data.detail.map(d => d.msg || JSON.stringify(d)).join(', ');
+          } else if (data.message) {
+            errDetail = data.message;
+          }
+          throw new Error(errDetail);
+        }
+
+        showToast('Account created! Logging in automatically...', 'success');
+
+        // Automatically log in with the new credentials
+        try {
+          const loginRes = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+          if (loginRes.ok) {
+            const loginData = await loginRes.json();
+            localStorage.setItem('access_token', loginData.access_token);
+            localStorage.setItem('refresh_token', loginData.refresh_token);
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 600);
+            return;
+          }
+        } catch (_) {}
+
+        switchTab('login');
+        document.getElementById('login-email').value = email;
+      } catch (err) {
+        showToast(err.message, 'error');
+        btnSubmitRegister.disabled = false;
+        btnSubmitRegister.textContent = 'Complete Registration';
       }
     });
   </script>

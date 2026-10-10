@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NLP Linguistic Studio - NewsDetector</title>
+  <meta name="description" content="Linguistic text preprocessing, readability, sensationalism and keyword extraction.">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+
+    <!-- ====================================================================
+         Sidebar Menu Bar (Modules of AI Project)
+         ==================================================================== -->
+    <aside class="sidebar-nav">
+      <div class="sidebar-header">
+        <a href="/" class="sidebar-brand">
+          <div class="sidebar-brand-icon">
+            <img src="/static/favicon.svg" alt="NewsDetector Logo" width="30" height="30">
+          </div>
+          <div class="sidebar-brand-text">
+            <h1>NewsDetector</h1>
+            <span>Gemma 3 • v1.0</span>
+          </div>
+        </a>
+
+        <div>
+          <div class="sidebar-group-title">AI Project Modules</div>
+          <ul class="sidebar-menu" aria-label="Main Navigation">
+            <li>
+              <a href="/" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                <span>News Analyzer</span>
+              </a>
+            </li>
+            <li>
+              <a href="/dashboard-page" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                <span>Dashboard & Reports</span>
+              </a>
+            </li>
+            <li>
+              <a href="/history-page" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Detection History</span>
+              </a>
+            </li>
+            <li>
+              <a href="/nlp-page" class="sidebar-link active">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+                <span>NLP Studio</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Sidebar User Footer -->
+      <div class="sidebar-footer">
+        <div class="sidebar-user-card" id="auth-user-section">
+          <div class="sidebar-user-avatar" id="header-user-avatar">U</div>
+          <div class="sidebar-user-details">
+            <span class="sidebar-user-name" id="header-user-name">Active User</span>
+            <span class="sidebar-user-role" id="header-user-role">USER</span>
+          </div>
+        </div>
+
+        <button type="button" class="btn-sidebar-logout" id="btn-logout" title="Sign Out">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ====================================================================
+         Main NLP Workspace
+         ==================================================================== -->
+    <main class="main-viewport">
+      
+      <div class="hero-banner">
+        <div class="hero-text">
+          <h2>Natural Language Processing (NLP) Studio</h2>
+          <p>Extract linguistic features, structural syntax, Flesch reading ease scores, sensationalism clickbait indicators, and keyword densities.</p>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-chip">
+            <div class="stat-chip-val">Flesch-Kincaid</div>
+            <div class="stat-chip-lbl">Readability Core</div>
+          </div>
+          <div class="stat-chip">
+            <div class="stat-chip-val">Regex + Heuristics</div>
+            <div class="stat-chip-lbl">Sensationalism Model</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Input & Options Card -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              News Text & Cleaning Pipeline
+            </h3>
+            <span class="brand-badge">POST /preprocess • /analyze</span>
+          </div>
+
+          <form id="form-nlp">
+            <div class="form-group">
+              <label for="nlp-text-input">News Article or Paragraph Text:</label>
+              <textarea id="nlp-text-input" rows="6" placeholder="Paste full article or paragraphs to extract lexical features..." required></textarea>
+            </div>
+
+            <div class="samples-wrapper">
+              <span class="samples-label">Quick Samples:</span>
+              <button type="button" class="sample-chip" data-nlp-sample="SHOCKING BOMBSHELL!! Miracle cure they don't want you to know about!! Doctor reveals bizarre trick to eliminate disease in 24 hours!!">Sensational Headline</button>
+              <button type="button" class="sample-chip" data-nlp-sample="The central bank held a quarterly monetary policy meeting in the capital city today, maintaining benchmark overnight borrowing rates within expected economic target corridors.">Neutral Official News</button>
+            </div>
+
+            <!-- Cleaning Options -->
+            <div style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.85rem;">
+              <label class="checkbox-group">
+                <input type="checkbox" id="nlp-opt-html" checked>
+                <span>Strip HTML Tags</span>
+              </label>
+              <label class="checkbox-group">
+                <input type="checkbox" id="nlp-opt-contractions" checked>
+                <span>Expand Contractions</span>
+              </label>
+              <label class="checkbox-group">
+                <input type="checkbox" id="nlp-opt-urls" checked>
+                <span>Remove URLs</span>
+              </label>
+              <label class="checkbox-group">
+                <input type="checkbox" id="nlp-opt-stopwords">
+                <span>Filter Stopwords</span>
+              </label>
+            </div>
+
+            <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem;">
+              <button type="submit" class="btn btn-primary" id="btn-run-nlp">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+                Extract NLP Features
+              </button>
+              <button type="button" class="btn btn-secondary" id="btn-clean-only">Clean Text Only</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Metrics & Output Card -->
+        <div class="card" id="card-nlp-results">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Linguistic Metrics & Cleaned Preview
+            </h3>
+            <span id="nlp-status-indicator" class="brand-badge">Awaiting Text</span>
+          </div>
+
+          <div id="nlp-empty-state" style="text-align: center; padding: 3rem 1rem; color: var(--text-dim);">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 0.75rem; opacity: 0.5;"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/></svg>
+            <p>Submit text on the left to inspect readability levels, sensationalism scores, keyword frequencies, and tokenization.</p>
+          </div>
+
+          <div id="nlp-output-container" style="display: none;">
+            <!-- Linguistic metrics row -->
+            <div class="metrics-row">
+              <div class="metric-box">
+                <div class="metric-number" id="metric-word-count">0</div>
+                <div class="metric-label">Words</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-number" id="metric-sentence-count">0</div>
+                <div class="metric-label">Sentences</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-number" id="metric-flesch-score">0</div>
+                <div class="metric-label">Flesch Ease</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-number" id="metric-sensational-score">0.0</div>
+                <div class="metric-label">Sensationalism</div>
+              </div>
+            </div>
+
+            <!-- Readability & Clickbait Banners -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+              <div class="stat-chip" style="text-align: left;">
+                <div class="stat-chip-lbl">Reading Level</div>
+                <div style="font-weight: 600; color: #38bdf8;" id="nlp-reading-level">Standard</div>
+              </div>
+              <div class="stat-chip" style="text-align: left;">
+                <div class="stat-chip-lbl">Sensationalism Class</div>
+                <div style="font-weight: 600;" id="nlp-sensational-status">Objective</div>
+              </div>
+            </div>
+
+            <!-- Top Keywords -->
+            <div class="form-group">
+              <label style="font-weight: 700; color: #a5b4fc;">Top Informative Keywords Extracted:</label>
+              <div id="nlp-keywords-list" class="keywords-container"></div>
+            </div>
+
+            <!-- Cleaned Text Box -->
+            <div class="form-group" style="margin-top: 1rem;">
+              <label style="font-weight: 700; color: #a5b4fc;">Normalized Cleaned Text Preview:</label>
+              <textarea id="nlp-cleaned-preview" readonly style="min-height: 80px; font-size: 0.85rem; color: #94a3b8; font-family: var(--font-mono);"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script>
+    const API_BASE = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8000'))
+      ? 'http://127.0.0.1:8000'
+      : '';
+
+    let token = localStorage.getItem('access_token');
+    if (!token) {
+      window.location.href = '/login?redirect=/nlp-page';
+    }
+
+    async function api(path, options = {}) {
+      options.headers = options.headers || {};
+      options.headers['Authorization'] = `Bearer ${token}`;
+      if (!options.headers['Content-Type']) {
+        options.headers['Content-Type'] = 'application/json';
+      }
+      const res = await fetch(`${API_BASE}${path}`, options);
+      if (res.status === 401) {
+        localStorage.removeItem('access_token');
+        window.location.href = '/login?redirect=/nlp-page';
+        return;
+      }
+      return await res.json();
+    }
+
+    async function initUser() {
+      try {
+        const u = await api('/auth/me');
+        if (u) {
+          document.getElementById('header-user-avatar').textContent = (u.full_name || 'U').charAt(0).toUpperCase();
+          document.getElementById('header-user-name').textContent = u.full_name || u.email;
+          document.getElementById('header-user-role').textContent = (u.role || 'user').toUpperCase();
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    // Sample chips
+    document.querySelectorAll('.sample-chip[data-nlp-sample]').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        document.getElementById('nlp-text-input').value = chip.getAttribute('data-nlp-sample');
+      });
+    });
+
+    // Form submit
+    document.getElementById('form-nlp')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const news_text = document.getElementById('nlp-text-input').value.trim();
+      if (!news_text) return;
+
+      const btn = document.getElementById('btn-run-nlp');
+      try {
+        btn.disabled = true;
+        btn.textContent = 'Analyzing...';
+
+        const data = await api('/analyze', {
+          method: 'POST',
+          body: JSON.stringify({ news_text }),
+        });
+
+        displayNLP(data, news_text);
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg> Extract NLP Features`;
+      }
+    });
+
+    // Clean text only
+    document.getElementById('btn-clean-only')?.addEventListener('click', async () => {
+      const text = document.getElementById('nlp-text-input').value.trim();
+      if (!text) return;
+
+      try {
+        const data = await api('/preprocess', {
+          method: 'POST',
+          body: JSON.stringify({
+            text,
+            lowercase: true,
+            strip_html: document.getElementById('nlp-opt-html').checked,
+            expand_contractions: document.getElementById('nlp-opt-contractions').checked,
+            remove_urls: document.getElementById('nlp-opt-urls').checked,
+            remove_stopwords: document.getElementById('nlp-opt-stopwords').checked,
+            preserve_sentence_punct: true,
+          }),
+        });
+
+        document.getElementById('nlp-empty-state').style.display = 'none';
+        document.getElementById('nlp-output-container').style.display = 'block';
+        document.getElementById('nlp-cleaned-preview').value = data.cleaned_text;
+        document.getElementById('metric-word-count').textContent = data.word_count;
+        document.getElementById('metric-sentence-count').textContent = data.sentences ? data.sentences.length : 0;
+        showToast('Text cleaned & tokenized', 'success');
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    });
+
+    function displayNLP(data, rawText) {
+      document.getElementById('nlp-empty-state').style.display = 'none';
+      document.getElementById('nlp-output-container').style.display = 'block';
+      document.getElementById('nlp-status-indicator').textContent = 'Analyzed';
+
+      document.getElementById('metric-word-count').textContent = data.word_count || 0;
+      document.getElementById('metric-sentence-count').textContent = data.sentence_count || 0;
+      document.getElementById('metric-flesch-score').textContent = Math.round(data.flesch_reading_ease || 0);
+      document.getElementById('metric-sensational-score').textContent = (data.sensationalism_score || 0).toFixed(2);
+
+      document.getElementById('nlp-reading-level').textContent = data.reading_level || 'Standard';
+      const sensEl = document.getElementById('nlp-sensational-status');
+      if (data.is_sensational) {
+        sensEl.textContent = 'High Sensationalism';
+        sensEl.style.color = 'var(--verdict-fake)';
+      } else {
+        sensEl.textContent = 'Objective / Informative';
+        sensEl.style.color = 'var(--verdict-real)';
+      }
+
+      const kwContainer = document.getElementById('nlp-keywords-list');
+      kwContainer.innerHTML = '';
+      (data.top_keywords || []).forEach((kw) => {
+        const chip = document.createElement('span');
+        chip.className = 'keyword-chip';
+        chip.textContent = kw;
+        kwContainer.appendChild(chip);
+      });
+
+      document.getElementById('nlp-cleaned-preview').value = rawText;
+    }
+
+    // Logout
+    document.getElementById('btn-logout')?.addEventListener('click', () => {
+      if (confirm('Sign out from NewsDetector?')) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        window.location.href = '/login';
+      }
+    });
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    window.addEventListener('DOMContentLoaded', initUser);
+  </script>
+</body>
+</html>

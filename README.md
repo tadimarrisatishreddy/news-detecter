@@ -1,4 +1,4 @@
-# TruthLens AI - Fake News Detector & Fact-Checking Studio
+# NewsDetector - Fake News Detector & Fact-Checking Studio
 
 A complete, production-ready full-stack AI system featuring:
 - **Module 1**: Secure User Authentication & Role-Based Access Control (RBAC)

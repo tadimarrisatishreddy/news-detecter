@@ -99,6 +99,19 @@ def test_successful_registration():
     assert "password" not in data
     assert "hashed_password" not in data
 
+def test_successful_registration_with_password_confirm_alias():
+    """Registration works when client sends password_confirm field name."""
+    payload = {
+        "full_name": "Bob Alias",
+        "email": "bob.alias@example.com",
+        "password": "ValidPassword123!",
+        "password_confirm": "ValidPassword123!",
+    }
+    response = client.post("/auth/register", json=payload)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["email"] == "bob.alias@example.com"
+
 
 def test_duplicate_email_registration_rejected():
     """Duplicate email registration must return 400 Bad Request."""

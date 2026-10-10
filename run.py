@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TruthLens AI - System Launcher & Runner
+NewsDetector - System Launcher & Runner
 Module 6: Frontend & Deployment Execution
 ===========================================
 Starts the complete AI Fake News Detector backend & frontend system.
@@ -19,7 +19,7 @@ sys.path.insert(0, str(BASE_DIR))
 def check_prerequisites():
     """Verify runtime environment and dependencies."""
     print("=" * 72)
-    print("  TRUTHLENS AI - Fake News Detector & Fact-Checking Studio")
+    print("  NEWSDETECTOR - Fake News Detector & Fact-Checking Studio")
     print("  Version: 1.0.0 | Full-Stack System (Modules 1 - 6)")
     print("=" * 72)
 

@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, EmailStr, Field, field_validator
 from auth.password import validate_password_strength
 
 
@@ -8,7 +8,7 @@ class UserRegisterRequest(BaseModel):
     full_name: str = Field(..., min_length=1, max_length=100, description="User's full name")
     email: EmailStr = Field(..., description="Valid email address")
     password: str = Field(..., min_length=8, description="Strong password")
-    confirm_password: str = Field(..., min_length=8, description="Password confirmation")
+    confirm_password: str = Field(..., min_length=8, validation_alias=AliasChoices("confirm_password", "password_confirm"), description="Password confirmation")
 
     @field_validator("password")
     @classmethod
@@ -82,7 +82,7 @@ class ForgotPasswordRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     token: str = Field(..., min_length=1, description="Password reset token")
     new_password: str = Field(..., min_length=8, description="New strong password")
-    confirm_password: str = Field(..., min_length=8, description="Confirmation of new password")
+    confirm_password: str = Field(..., min_length=8, validation_alias=AliasChoices("confirm_password", "password_confirm"), description="Confirmation of new password")
 
     @field_validator("new_password")
     @classmethod
@@ -103,7 +103,7 @@ class ResetPasswordRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):
     current_password: str = Field(..., min_length=1, description="Current account password")
     new_password: str = Field(..., min_length=8, description="New strong password")
-    confirm_password: str = Field(..., min_length=8, description="Confirmation of new password")
+    confirm_password: str = Field(..., min_length=8, validation_alias=AliasChoices("confirm_password", "password_confirm"), description="Confirmation of new password")
 
     @field_validator("new_password")
     @classmethod
